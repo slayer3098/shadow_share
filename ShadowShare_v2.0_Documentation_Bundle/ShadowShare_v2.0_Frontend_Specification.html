@@ -1,0 +1,1104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ShadowShare v2.0 — Frontend Specification</title>
+<style>
+/* ShadowShare Document Theme — shared across all 3 docs */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root{
+  --bg:#0A0C12; --surface:#12151F; --elevated:#1C2030; --border:#252A3A;
+  --brand:#7C6EFA; --brand-hover:#9B8FFB; --brand-dim:#2A2560;
+  --text:#EEF0F6; --text-2:#8B92A8; --text-3:#525869;
+  --success:#27D585; --warning:#F5A623; --danger:#EF5350;
+  --mono:'JetBrains Mono', ui-monospace, Menlo, monospace;
+  --sans:'Inter', -apple-system, system-ui, sans-serif;
+}
+
+@media print {
+  :root{
+    --bg:#ffffff; --surface:#ffffff; --elevated:#F7F8FA; --border:#E2E5EE;
+    --text:#0A0C12; --text-2:#3C4255; --text-3:#6B7185;
+    --brand-dim:#EEEBFF;
+  }
+  body{background:#fff !important; color:#0A0C12 !important;}
+  .no-print{display:none !important;}
+  .page-break{page-break-before:always;}
+  h1,h2,h3,h4{break-after:avoid;}
+  pre,table,figure{break-inside:avoid;}
+  a{color:#4E3FCE; text-decoration:none;}
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:var(--sans);
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.65;
+  font-size:14.5px;
+  -webkit-font-smoothing:antialiased;
+}
+
+.doc{max-width:880px; margin:0 auto; padding:60px 56px;}
+
+/* Cover page */
+.cover{
+  min-height:92vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:80px 56px;
+  border-bottom:1px solid var(--border);
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(124,110,250,0.08), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 50% 100%, rgba(39,213,133,0.04), transparent 70%);
+}
+.cover .eyebrow{
+  font-size:12px; letter-spacing:0.18em; text-transform:uppercase;
+  color:var(--brand-hover); font-weight:600; margin-bottom:24px;
+}
+.cover h1{
+  font-size:56px; font-weight:600; line-height:1.05;
+  margin:0 0 18px 0; letter-spacing:-0.02em;
+}
+.cover h1 .accent{color:var(--brand);}
+.cover .tagline{
+  font-size:20px; color:var(--text-2); font-weight:400;
+  max-width:560px; margin:0 0 48px 0;
+}
+.cover .meta-grid{
+  display:grid;
+  grid-template-columns:repeat(2, 1fr);
+  gap:0;
+  border:1px solid var(--border);
+  border-radius:10px;
+  overflow:hidden;
+  max-width:640px;
+  margin-top:32px;
+}
+.cover .meta-cell{
+  padding:18px 22px;
+  border-right:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+}
+.cover .meta-cell:nth-child(2n){border-right:none;}
+.cover .meta-cell:nth-last-child(-n+2){border-bottom:none;}
+.cover .meta-label{font-size:11px; color:var(--text-3); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:6px;}
+.cover .meta-value{font-size:15px; font-weight:500; color:var(--text);}
+
+.logo-mark{
+  display:inline-flex; align-items:center; gap:10px;
+  font-weight:600; font-size:18px;
+}
+.logo-mark svg{flex-shrink:0;}
+
+/* Headings */
+h1, h2, h3, h4, h5{font-family:var(--sans); color:var(--text); font-weight:600;}
+h2{
+  font-size:30px; margin-top:64px; margin-bottom:16px;
+  padding-bottom:12px; border-bottom:1px solid var(--border);
+  letter-spacing:-0.01em;
+}
+h2 .num{color:var(--brand); font-weight:500; margin-right:14px;}
+h3{font-size:21px; margin-top:42px; margin-bottom:12px; letter-spacing:-0.005em;}
+h4{font-size:16px; margin-top:28px; margin-bottom:8px; color:var(--text);}
+h5{font-size:13px; margin:18px 0 6px 0; color:var(--text-2); text-transform:uppercase; letter-spacing:0.08em;}
+
+p{margin:10px 0 14px 0; color:var(--text);}
+strong{color:var(--text); font-weight:600;}
+em{color:var(--text-2);}
+
+/* Links */
+a{color:var(--brand-hover); text-decoration:none; border-bottom:1px solid transparent;}
+a:hover{border-bottom-color:var(--brand-hover);}
+
+/* Code */
+code{
+  font-family:var(--mono); font-size:0.88em;
+  background:var(--elevated); color:var(--brand-hover);
+  padding:1.5px 6px; border-radius:4px; border:1px solid var(--border);
+}
+pre{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:18px 20px;
+  overflow-x:auto;
+  font-family:var(--mono);
+  font-size:12.5px;
+  line-height:1.6;
+  color:var(--text);
+}
+pre code{background:none; border:none; padding:0; color:inherit;}
+
+/* Tables */
+table{
+  width:100%; border-collapse:collapse; margin:18px 0 22px 0;
+  font-size:13.5px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  overflow:hidden;
+}
+thead{background:var(--elevated);}
+th{
+  text-align:left; padding:12px 16px; font-weight:600;
+  font-size:12px; text-transform:uppercase; letter-spacing:0.06em;
+  color:var(--text-2); border-bottom:1px solid var(--border);
+}
+td{padding:11px 16px; border-bottom:1px solid var(--border); color:var(--text); vertical-align:top;}
+tr:last-child td{border-bottom:none;}
+tr:nth-child(even) td{background:rgba(28,32,48,0.35);}
+@media print{tr:nth-child(even) td{background:#FAFBFD;}}
+
+/* Lists */
+ul, ol{padding-left:22px; margin:10px 0 16px 0;}
+li{margin:5px 0; color:var(--text);}
+li::marker{color:var(--brand);}
+
+/* Callouts */
+.callout{
+  margin:20px 0;
+  padding:16px 20px;
+  border-radius:8px;
+  border-left:3px solid var(--brand);
+  background:rgba(124,110,250,0.06);
+  font-size:13.5px;
+  color:var(--text);
+}
+.callout.warn{border-left-color:var(--warning); background:rgba(245,166,35,0.06);}
+.callout.danger{border-left-color:var(--danger); background:rgba(239,83,80,0.06);}
+.callout.success{border-left-color:var(--success); background:rgba(39,213,133,0.06);}
+.callout .ctitle{font-weight:600; margin-bottom:4px; font-size:13px; text-transform:uppercase; letter-spacing:0.06em;}
+.callout.warn .ctitle{color:var(--warning);}
+.callout.danger .ctitle{color:var(--danger);}
+.callout.success .ctitle{color:var(--success);}
+.callout .ctitle{color:var(--brand-hover);}
+
+/* Badges */
+.badge{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:3px 10px; font-size:11.5px; font-weight:500;
+  border-radius:9999px;
+  border:1px solid var(--border);
+  background:var(--elevated); color:var(--text-2);
+  letter-spacing:0.02em;
+}
+.badge.brand{background:var(--brand-dim); border-color:rgba(124,110,250,0.4); color:var(--brand-hover);}
+.badge.success{background:rgba(39,213,133,0.1); border-color:rgba(39,213,133,0.3); color:var(--success);}
+.badge.warn{background:rgba(245,166,35,0.1); border-color:rgba(245,166,35,0.3); color:var(--warning);}
+.badge.danger{background:rgba(239,83,80,0.1); border-color:rgba(239,83,80,0.3); color:var(--danger);}
+.badge.new{background:rgba(124,110,250,0.18); border-color:rgba(124,110,250,0.5); color:var(--brand-hover);}
+
+/* TOC */
+.toc{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:24px 28px;
+  margin:32px 0 0 0;
+}
+.toc h3{margin-top:0; font-size:14px; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-2);}
+.toc ol{list-style:none; padding-left:0; counter-reset:toc;}
+.toc ol li{counter-increment:toc; padding:5px 0; border-bottom:1px dashed var(--border); display:flex; justify-content:space-between; font-size:13.5px;}
+.toc ol li:last-child{border-bottom:none;}
+.toc ol li::before{content:counter(toc, decimal) ". "; color:var(--brand); font-weight:500; margin-right:10px;}
+.toc a{flex:1; color:var(--text);}
+.toc .pgnum{color:var(--text-3); font-family:var(--mono); font-size:12px;}
+
+/* Feature cards */
+.feature-grid{
+  display:grid;
+  grid-template-columns:repeat(2, 1fr);
+  gap:14px;
+  margin:18px 0 24px 0;
+}
+.feat{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:18px 20px;
+}
+.feat .ftitle{
+  display:flex; align-items:center; justify-content:space-between;
+  font-weight:600; font-size:14.5px; margin-bottom:8px; color:var(--text);
+}
+.feat .fdesc{font-size:13px; color:var(--text-2); line-height:1.55;}
+
+/* HTTP method tags */
+.http{
+  display:inline-block; font-family:var(--mono); font-size:11px;
+  font-weight:600; padding:3px 8px; border-radius:4px;
+  letter-spacing:0.04em; margin-right:8px;
+}
+.http.get{background:rgba(39,213,133,0.15); color:var(--success); border:1px solid rgba(39,213,133,0.3);}
+.http.post{background:rgba(124,110,250,0.15); color:var(--brand-hover); border:1px solid rgba(124,110,250,0.3);}
+.http.delete{background:rgba(239,83,80,0.15); color:var(--danger); border:1px solid rgba(239,83,80,0.3);}
+.http.put{background:rgba(245,166,35,0.15); color:var(--warning); border:1px solid rgba(245,166,35,0.3);}
+
+.endpoint{
+  background:var(--elevated);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:14px 18px;
+  margin:14px 0;
+  font-family:var(--mono);
+  font-size:13px;
+}
+
+/* Page footer */
+.doc-footer{
+  margin-top:80px; padding-top:24px;
+  border-top:1px solid var(--border);
+  display:flex; justify-content:space-between;
+  font-size:12px; color:var(--text-3);
+}
+
+/* Two-column flex */
+.row2{display:grid; grid-template-columns:1fr 1fr; gap:18px; margin:14px 0;}
+
+/* KV list */
+.kv{display:grid; grid-template-columns:200px 1fr; gap:8px 18px; margin:14px 0; font-size:13.5px;}
+.kv dt{color:var(--text-2); font-weight:500;}
+.kv dd{margin:0; color:var(--text); font-family:var(--mono); font-size:12.5px;}
+
+hr{border:none; border-top:1px solid var(--border); margin:36px 0;}
+
+/* Diagram boxes (ascii-art friendly) */
+.diagram{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:20px;
+  font-family:var(--mono);
+  font-size:12px;
+  line-height:1.5;
+  white-space:pre;
+  overflow-x:auto;
+  color:var(--text-2);
+}
+
+/* Ticket cards */
+.ticket{
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:16px 20px;
+  margin:14px 0;
+  background:var(--surface);
+}
+.ticket-head{
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:8px; flex-wrap:wrap; gap:8px;
+}
+.ticket-id{font-family:var(--mono); font-weight:600; color:var(--brand-hover); font-size:13px;}
+.ticket-title{font-weight:600; font-size:15px; flex:1;}
+.ticket-body{font-size:13px; color:var(--text-2); margin-top:6px;}
+.ticket-meta{font-size:11.5px; color:var(--text-3); margin-top:8px; display:flex; gap:14px;}
+
+</style>
+</head>
+<body>
+
+<!-- ============ COVER ============ -->
+<section class="cover">
+  <div class="logo-mark">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M8 12V9a6 6 0 0 1 11.5-2.4" stroke="#7C6EFA" stroke-width="2" stroke-linecap="round"/>
+      <rect x="5" y="12" width="18" height="13" rx="2.5" stroke="#7C6EFA" stroke-width="2"/>
+      <path d="M14 17v3" stroke="#7C6EFA" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    ShadowShare
+  </div>
+
+  <div class="eyebrow" style="margin-top:48px;">Frontend Specification · v2.0</div>
+  <h1>The <span class="accent">trusted zone.</span></h1>
+  <p class="tagline">A complete specification for the React/TypeScript browser application that performs all encryption, decryption, and key handling for ShadowShare.</p>
+
+  <div class="meta-grid">
+    <div class="meta-cell"><div class="meta-label">Framework</div><div class="meta-value">React 18 + Vite 5</div></div>
+    <div class="meta-cell"><div class="meta-label">Language</div><div class="meta-value">TypeScript 5.4 (strict)</div></div>
+    <div class="meta-cell"><div class="meta-label">Styling</div><div class="meta-value">Tailwind CSS 3.4</div></div>
+    <div class="meta-cell"><div class="meta-label">Crypto</div><div class="meta-value">Web Crypto API (native)</div></div>
+    <div class="meta-cell"><div class="meta-label">State</div><div class="meta-value">Zustand 4.5</div></div>
+    <div class="meta-cell"><div class="meta-label">Routing</div><div class="meta-value">React Router 6.22</div></div>
+  </div>
+
+  <div style="margin-top:40px; display:flex; gap:8px; flex-wrap:wrap;">
+    <span class="badge brand">TypeScript Strict</span>
+    <span class="badge brand">Tailwind</span>
+    <span class="badge brand">Web Crypto</span>
+    <span class="badge brand">WCAG 2.2 AA</span>
+  </div>
+</section>
+
+<div class="doc">
+
+<!-- TOC -->
+<div class="toc">
+  <h3>Table of Contents</h3>
+  <ol>
+    <li><a href="#s1">Frontend Mission & Scope</a><span class="pgnum">§1</span></li>
+    <li><a href="#s2">Tooling & Build Pipeline</a><span class="pgnum">§2</span></li>
+    <li><a href="#s3">Project Structure</a><span class="pgnum">§3</span></li>
+    <li><a href="#s4">Routing</a><span class="pgnum">§4</span></li>
+    <li><a href="#s5">State Management</a><span class="pgnum">§5</span></li>
+    <li><a href="#s6">Cryptography Module</a><span class="pgnum">§6</span></li>
+    <li><a href="#s7">API Client Layer</a><span class="pgnum">§7</span></li>
+    <li><a href="#s8">Design System & Tokens</a><span class="pgnum">§8</span></li>
+    <li><a href="#s9">Component Library (12 components)</a><span class="pgnum">§9</span></li>
+    <li><a href="#s10">Screen Specifications</a><span class="pgnum">§10</span></li>
+    <li><a href="#s11">Feature Implementation Details</a><span class="pgnum">§11</span></li>
+    <li><a href="#s12">Theme & Dark/Light Mode</a><span class="pgnum">§12</span></li>
+    <li><a href="#s13">Accessibility</a><span class="pgnum">§13</span></li>
+    <li><a href="#s14">Performance Budget</a><span class="pgnum">§14</span></li>
+    <li><a href="#s15">Browser Support</a><span class="pgnum">§15</span></li>
+    <li><a href="#s16">Frontend Security Guarantees</a><span class="pgnum">§16</span></li>
+    <li><a href="#s17">Testing</a><span class="pgnum">§17</span></li>
+    <li><a href="#s18">Frontend Tickets</a><span class="pgnum">§18</span></li>
+  </ol>
+</div>
+
+<!-- ============================================== -->
+<h2 id="s1"><span class="num">01</span>Frontend Mission & Scope</h2>
+
+<p>The ShadowShare frontend is the <strong>only place</strong> where user plaintext, encryption keys, and access passwords ever exist. It is therefore not merely a UI layer — it is the entire trusted compute zone of the product. Every architectural decision (no third-party scripts, no service worker, no analytics, strict CSP, type-safe crypto interfaces) flows from this responsibility.</p>
+
+<p>The frontend has four primary responsibilities:</p>
+<ol>
+  <li><strong>Cryptographic execution</strong> — PBKDF2 key derivation, AES-256-GCM encryption / decryption, IV generation, auth-tag verification.</li>
+  <li><strong>Key transport</strong> — embed key material in the URL fragment for the sender; read it back from <code>location.hash</code> for the recipient.</li>
+  <li><strong>UX state machine</strong> — drive the sender and recipient through encrypt / upload / share / decrypt / download phases.</li>
+  <li><strong>Trust communication</strong> — make the crypto guarantees visible, comprehensible, and verifiable to both technical and non-technical users.</li>
+</ol>
+
+<div class="callout danger">
+  <div class="ctitle">Single inviolable rule</div>
+  Nothing that crosses the boundary out of the browser may contain plaintext, the encryption key, the user's password, or any pre-image of either. This rule is enforced through code review, unit tests, and an ESLint rule that flags suspicious <code>fetch</code> bodies.
+</div>
+
+<!-- ============================================== -->
+<h2 id="s2"><span class="num">02</span>Tooling & Build Pipeline</h2>
+
+<table>
+<thead><tr><th>Tool</th><th>Version</th><th>Role</th></tr></thead>
+<tbody>
+<tr><td>Vite</td><td>5.x</td><td>Dev server (HMR), production build (esbuild + Rollup)</td></tr>
+<tr><td>TypeScript</td><td>5.4</td><td>Strict mode; no <code>any</code>; <code>noUncheckedIndexedAccess</code></td></tr>
+<tr><td>React</td><td>18.3</td><td>UI framework</td></tr>
+<tr><td>React Router</td><td>6.22</td><td>Client routing</td></tr>
+<tr><td>Zustand</td><td>4.5</td><td>App state (no Redux required)</td></tr>
+<tr><td>Tailwind CSS</td><td>3.4</td><td>Atomic CSS; design tokens via theme config</td></tr>
+<tr><td>Phosphor Icons</td><td>2.x (React, duotone)</td><td>Single icon library, 20/24/40/64 sizes</td></tr>
+<tr><td>JSZip</td><td>3.10</td><td>F7 multi-file bundling, client-side</td></tr>
+<tr><td>qrcode</td><td>1.5</td><td>F9 QR rendering, client-side</td></tr>
+<tr><td>pdfjs-dist</td><td>4.x</td><td>F8 PDF page-1 preview</td></tr>
+<tr><td>Vitest</td><td>1.x</td><td>Unit / integration test runner</td></tr>
+<tr><td>Playwright</td><td>1.x</td><td>End-to-end browser tests</td></tr>
+<tr><td>ESLint</td><td>9.x</td><td>Lint + custom security rules</td></tr>
+<tr><td>Prettier</td><td>3.x</td><td>Formatting (single-quote, 2 spaces)</td></tr>
+</tbody>
+</table>
+
+<h3>2.1 Build Output</h3>
+<ul>
+  <li>Single SPA bundle with code-splitting on the viewer route (PDF.js loaded on demand).</li>
+  <li>Subresource integrity (SRI) hashes generated by Vite plugin for every emitted JS/CSS asset.</li>
+  <li>Source maps emitted but uploaded only to private Sentry — not served publicly.</li>
+  <li>No CDN dependencies in the critical path (no Google Fonts on production — Inter and JetBrains Mono are self-hosted and preloaded).</li>
+</ul>
+
+<!-- ============================================== -->
+<h2 id="s3"><span class="num">03</span>Project Structure</h2>
+
+<pre><code>shadowshare-web/
+├── public/
+│   ├── favicon.svg
+│   └── fonts/                  # self-hosted Inter, JetBrains Mono
+├── src/
+│   ├── main.tsx                # React entrypoint
+│   ├── App.tsx                 # Router shell, theme provider
+│   ├── routes/
+│   │   ├── UploadPage.tsx
+│   │   ├── ViewerPage.tsx
+│   │   ├── StatusPage.tsx
+│   │   ├── DeletePage.tsx
+│   │   ├── NotFoundPage.tsx
+│   │   └── UnsupportedBrowserPage.tsx
+│   ├── components/
+│   │   ├── ui/                 # 12-component library (see §9)
+│   │   ├── upload/             # DropZone, SecurityModeSelector, AdvancedOptions
+│   │   ├── viewer/             # IntegrityBadge, PreviewPane, Countdown
+│   │   ├── share/              # ShareLinkBox, QRPopover, DeleteLinkBox
+│   │   └── modals/             # HowItWorksModal, ConfirmModal
+│   ├── crypto/
+│   │   ├── kdf.ts              # PBKDF2 wrappers
+│   │   ├── aead.ts             # AES-GCM encrypt/decrypt
+│   │   ├── random.ts           # IV + key generation; uniqueness asserts
+│   │   ├── fragment.ts         # URL fragment encode/decode
+│   │   ├── verifier.ts         # access-password verifier (F5)
+│   │   └── index.ts            # public API of crypto module
+│   ├── api/
+│   │   ├── client.ts           # typed fetch wrapper
+│   │   ├── upload.ts           # chunked upload orchestrator (F10)
+│   │   ├── download.ts         # streaming download + tamper detection
+│   │   └── status.ts           # sender status fetcher
+│   ├── state/
+│   │   ├── uploadStore.ts      # Zustand: phase, progress, file list
+│   │   ├── viewerStore.ts      # Zustand: decryption state, preview
+│   │   └── themeStore.ts       # Zustand: theme (system/dark/light)
+│   ├── hooks/
+│   │   ├── useDropzone.ts
+│   │   ├── useCountdown.ts
+│   │   ├── useClipboard.ts
+│   │   └── useTheme.ts
+│   ├── lib/
+│   │   ├── zip.ts              # JSZip wrapper for F7
+│   │   ├── preview.ts          # F8 preview helpers (img + PDF.js)
+│   │   ├── qrcode.ts           # F9 QR helper
+│   │   ├── format.ts           # bytes, dates, durations
+│   │   └── browserSupport.ts   # capability detection
+│   ├── styles/
+│   │   ├── tokens.css          # design tokens (light + dark)
+│   │   └── globals.css
+│   └── types/
+│       └── api.ts              # API DTOs (typed with zod schemas)
+├── tests/
+│   ├── unit/
+│   ├── integration/
+│   └── e2e/
+├── index.html
+├── vite.config.ts
+├── tailwind.config.ts
+├── tsconfig.json
+├── eslint.config.js
+└── package.json
+</code></pre>
+
+<!-- ============================================== -->
+<h2 id="s4"><span class="num">04</span>Routing</h2>
+
+<table>
+<thead><tr><th>Path</th><th>Component</th><th>Purpose</th></tr></thead>
+<tbody>
+<tr><td><code>/</code></td><td>UploadPage</td><td>Sender uploads a file</td></tr>
+<tr><td><code>/v/:fileId</code></td><td>ViewerPage</td><td>Recipient downloads a file. Key in <code>#</code> fragment.</td></tr>
+<tr><td><code>/status/:fileId</code></td><td>StatusPage</td><td>Sender views status. Delete token in <code>#</code>.</td></tr>
+<tr><td><code>/delete/:fileId</code></td><td>DeletePage</td><td>Sender kill switch. Delete token in <code>#</code>.</td></tr>
+<tr><td><code>/unsupported</code></td><td>UnsupportedBrowserPage</td><td>Fallback for missing Web Crypto / WebKit too old.</td></tr>
+<tr><td><code>*</code></td><td>NotFoundPage</td><td>404</td></tr>
+</tbody>
+</table>
+
+<p>All non-root paths read sensitive material from <code>location.hash</code> in <code>useEffect</code> and immediately copy it to in-memory React state; the URL is then optionally rewritten via <code>history.replaceState</code> to remove the fragment from the address bar (configurable behaviour).</p>
+
+<!-- ============================================== -->
+<h2 id="s5"><span class="num">05</span>State Management</h2>
+
+<p>Three independent Zustand stores, intentionally narrow in scope.</p>
+
+<h4>5.1 uploadStore</h4>
+<pre><code>type UploadPhase =
+  | 'idle' | 'bundling' | 'deriving-key' | 'encrypting'
+  | 'uploading' | 'success' | 'error';
+
+interface UploadState {
+  files: File[];                 // selected by user
+  securityMode: 'link+password' | 'link-only';
+  password: string;              // never persisted
+  accessPassword: string | null; // F5
+  ttl: '1h' | '24h' | '7d' | '30d';
+  burnAfterRead: boolean;
+  maxDownloads: number | null;
+  phase: UploadPhase;
+  progressPct: number;
+  result: { fileId: string; key: string; deleteToken: string } | null;
+  error: string | null;
+  // actions
+  addFiles(files: File[]): void;
+  removeFile(index: number): void;
+  setSecurityMode(mode): void;
+  setPassword(p: string): void;
+  /* ... */
+  startUpload(): Promise&lt;void&gt;;
+  reset(): void;
+}</code></pre>
+
+<h4>5.2 viewerStore</h4>
+<pre><code>type ViewerPhase =
+  | 'loading' | 'awaiting-access-password' | 'awaiting-password'
+  | 'decrypting' | 'ready' | 'tampered' | 'expired' | 'not-found' | 'error';
+
+interface ViewerState {
+  fileId: string;
+  flags: { burnAfterRead: boolean; hasAccessPassword: boolean; expiresAt: string };
+  phase: ViewerPhase;
+  decryptedBlob: Blob | null;
+  decryptedMeta: { filename: string; mime: string; size: number } | null;
+  previewUrl: string | null;
+  error: string | null;
+  /* actions */
+  init(fileId: string, fragment: string): Promise&lt;void&gt;;
+  submitAccessPassword(p: string): Promise&lt;void&gt;;
+  submitPassword(p: string): Promise&lt;void&gt;;
+  download(): void;
+  reset(): void;
+}</code></pre>
+
+<h4>5.3 themeStore</h4>
+<pre><code>type Theme = 'system' | 'dark' | 'light';
+interface ThemeState {
+  theme: Theme;
+  resolvedTheme: 'dark' | 'light';
+  setTheme(t: Theme): void;
+}</code></pre>
+
+<div class="callout warn">
+  <div class="ctitle">Memory hygiene</div>
+  Both <code>uploadStore.password</code> and <code>viewerStore.decryptedBlob</code> hold sensitive data. They are <strong>cleared</strong> on route change and on <code>beforeunload</code>. They are never persisted to localStorage, sessionStorage, IndexedDB, or cookies. Devtools middleware is disabled in production builds (<code>import.meta.env.PROD</code>).
+</div>
+
+<!-- ============================================== -->
+<h2 id="s6"><span class="num">06</span>Cryptography Module</h2>
+
+<p>All cryptography lives in <code>src/crypto/</code>. Nothing outside this directory calls <code>crypto.subtle</code> directly; this enables a single audit surface.</p>
+
+<h3>6.1 Public API</h3>
+<pre><code>// src/crypto/index.ts
+
+export interface DerivedKey { key: CryptoKey; salt: Uint8Array; }
+
+export async function deriveKeyFromPassword(
+  password: string,
+  salt?: Uint8Array,                   // optional — undefined ⇒ generate fresh
+): Promise&lt;DerivedKey&gt;;
+
+export async function generateRandomKey(): Promise&lt;{ key: CryptoKey; raw: Uint8Array }&gt;;
+
+export async function encryptBytes(
+  key: CryptoKey,
+  plaintext: Uint8Array,
+): Promise&lt;{ ciphertext: Uint8Array; iv: Uint8Array }&gt;;
+
+export async function decryptBytes(
+  key: CryptoKey,
+  ciphertext: Uint8Array,
+  iv: Uint8Array,
+): Promise&lt;Uint8Array&gt;;   // throws on auth-tag failure
+
+export function encodeShareFragment(opts: {
+  mode: 'pwd' | 'key';
+  salt?: Uint8Array;
+  rawKey?: Uint8Array;
+  flags: { burn: boolean; hasAccessPwd: boolean };
+}): string;
+
+export function decodeShareFragment(fragment: string): {
+  mode: 'pwd' | 'key';
+  salt?: Uint8Array;
+  rawKey?: Uint8Array;
+  flags: { burn: boolean; hasAccessPwd: boolean };
+};
+
+export async function buildAccessVerifier(accessPassword: string):
+  Promise&lt;{ verifier: Uint8Array; salt: Uint8Array; iv: Uint8Array }&gt;;
+
+export async function checkAccessVerifier(
+  accessPassword: string,
+  verifier: Uint8Array, salt: Uint8Array, iv: Uint8Array,
+): Promise&lt;boolean&gt;;</code></pre>
+
+<h3>6.2 PBKDF2 (kdf.ts)</h3>
+<pre><code>const PBKDF2_ITERATIONS = 100_000;
+const SALT_BYTES = 16;
+const KEY_BYTES = 32;
+
+export async function deriveKeyFromPassword(password, salt) {
+  const realSalt = salt ?? crypto.getRandomValues(new Uint8Array(SALT_BYTES));
+  const baseKey = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(password),
+    { name: 'PBKDF2' }, false, ['deriveKey']
+  );
+  const key = await crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt: realSalt, iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' },
+    baseKey,
+    { name: 'AES-GCM', length: 256 },
+    /* extractable */ false, ['encrypt', 'decrypt']
+  );
+  return { key, salt: realSalt };
+}</code></pre>
+
+<h3>6.3 AES-256-GCM (aead.ts)</h3>
+<pre><code>const IV_BYTES = 12;
+
+export async function encryptBytes(key, plaintext) {
+  const iv = crypto.getRandomValues(new Uint8Array(IV_BYTES));
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, plaintext);
+  return { ciphertext: new Uint8Array(ct), iv };
+}
+
+export async function decryptBytes(key, ciphertext, iv) {
+  // Web Crypto throws on auth-tag mismatch — propagate as TamperedError
+  try {
+    const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
+    return new Uint8Array(pt);
+  } catch (e) {
+    throw new TamperedError('AEAD authentication failed', { cause: e });
+  }
+}</code></pre>
+
+<h3>6.4 IV uniqueness enforcement</h3>
+<p>A unit test in <code>tests/unit/crypto.iv.test.ts</code> generates 1,000,000 IVs and asserts zero collisions. A runtime <code>WeakSet</code> in dev builds also flags any IV reused within a single tab session (developer aid only — not present in production).</p>
+
+<h3>6.5 Share fragment format</h3>
+<pre><code>// Link + Password mode (F5 capable)
+#{base64url(salt)}.{flagsByte}
+
+// Link Only mode (F6)
+#k.{base64url(rawKey)}.{flagsByte}
+
+// flagsByte bits:
+//   bit 0 — burn_after_read
+//   bit 1 — has_access_password
+//   bits 2-7 — reserved (zero)</code></pre>
+
+<!-- ============================================== -->
+<h2 id="s7"><span class="num">07</span>API Client Layer</h2>
+
+<p><code>src/api/client.ts</code> is a 60-line typed <code>fetch</code> wrapper. It provides:</p>
+<ul>
+  <li>Automatic <code>Content-Type</code> and <code>Accept</code> headers.</li>
+  <li>Zod-validated response parsing — every DTO has a schema in <code>src/types/api.ts</code>.</li>
+  <li>Typed error union: <code>NetworkError | NotFoundError | ExpiredError | RateLimitError | ServerError</code>.</li>
+  <li>Strict policy: <strong>never</strong> includes <code>location.hash</code>, the password, or the key in any request body, query string, or header.</li>
+</ul>
+
+<h3>7.1 Chunked Upload Orchestrator (F10)</h3>
+<pre><code>// src/api/upload.ts (pseudocode)
+const CHUNK_SIZE = 5 * 1024 * 1024;
+
+async function uploadChunked(blob: Uint8Array, settings, onProgress) {
+  const { sessionId } = await api.post('/api/upload/init', {
+    total_size: blob.length,
+    total_chunks: Math.ceil(blob.length / CHUNK_SIZE),
+    settings,
+  });
+
+  const status = await api.get(`/api/upload/status/${sessionId}`);
+  let start = status.lastChunkIndex + 1;
+
+  for (let i = start; i &lt; totalChunks; i++) {
+    const slice = blob.subarray(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+    await retryWithBackoff(() =&gt;
+      api.put(`/api/upload/chunk/${sessionId}/${i}`, slice)
+    );
+    onProgress((i + 1) / totalChunks);
+  }
+
+  return api.post(`/api/upload/complete/${sessionId}`, { settings });
+}</code></pre>
+
+<!-- ============================================== -->
+<h2 id="s8"><span class="num">08</span>Design System & Tokens</h2>
+
+<h3>8.1 Color Tokens (Dark mode primary)</h3>
+<table>
+<thead><tr><th>Token</th><th>Dark</th><th>Light</th><th>Use</th></tr></thead>
+<tbody>
+<tr><td><code>--bg</code></td><td>#0A0C12</td><td>#F7F8FA</td><td>App background</td></tr>
+<tr><td><code>--surface</code></td><td>#12151F</td><td>#FFFFFF</td><td>Card / panel</td></tr>
+<tr><td><code>--elevated</code></td><td>#1C2030</td><td>#EFF1F6</td><td>Inputs, hover</td></tr>
+<tr><td><code>--border</code></td><td>#252A3A</td><td>#E2E5EE</td><td>Borders</td></tr>
+<tr><td><code>--brand</code></td><td>#7C6EFA</td><td>#5B4DEB</td><td>Primary accent</td></tr>
+<tr><td><code>--brand-hover</code></td><td>#9B8FFB</td><td>#7C6EFA</td><td>Hover accent</td></tr>
+<tr><td><code>--brand-dim</code></td><td>#2A2560</td><td>#EEEBFF</td><td>Tinted backgrounds</td></tr>
+<tr><td><code>--text</code></td><td>#EEF0F6</td><td>#0A0C12</td><td>Primary text</td></tr>
+<tr><td><code>--text-2</code></td><td>#8B92A8</td><td>#3C4255</td><td>Secondary text</td></tr>
+<tr><td><code>--text-3</code></td><td>#525869</td><td>#6B7185</td><td>Muted / placeholder</td></tr>
+<tr><td><code>--success</code></td><td>#27D585</td><td>#1AB873</td><td>Success / verified</td></tr>
+<tr><td><code>--warning</code></td><td>#F5A623</td><td>#D88A0F</td><td>Burn / expiry</td></tr>
+<tr><td><code>--danger</code></td><td>#EF5350</td><td>#D63F3C</td><td>Tamper / error</td></tr>
+</tbody>
+</table>
+
+<h3>8.2 Typography</h3>
+<ul>
+  <li><strong>Primary:</strong> Inter (400 / 500 / 600 — never 700+ except hero display).</li>
+  <li><strong>Monospace:</strong> JetBrains Mono — used for share links, file IDs, technical footnotes.</li>
+  <li><strong>Scale (px):</strong> 12 / 13 / 14 / 16 / 18 / 24 / 32 / 48.</li>
+  <li><strong>Line-height:</strong> 1.5 body, 1.2 headings.</li>
+</ul>
+
+<h3>8.3 Spacing, Radius, Motion</h3>
+<ul>
+  <li><strong>Base unit:</strong> 4px. All margins/paddings are multiples of 4.</li>
+  <li><strong>Radius:</strong> 6 (buttons/inputs) · 10 (cards) · 16 (large panels) · 24 (hero card) · 9999 (pills).</li>
+  <li><strong>Motion:</strong> max 350 ms; cubic-bezier(0.4, 0, 0.2, 1) by default; reduced-motion media query disables non-essential animation.</li>
+</ul>
+
+<!-- ============================================== -->
+<h2 id="s9"><span class="num">09</span>Component Library (12 Components)</h2>
+
+<p>All components live in <code>src/components/ui/</code>. Each has: (a) a TypeScript prop interface, (b) every documented state, (c) Storybook story, (d) Vitest unit test, (e) accessibility attributes.</p>
+
+<h3>9.1 Button</h3>
+<p>Variants: <code>primary</code> · <code>outline</code> · <code>ghost</code> · <code>danger</code>. Sizes: <code>sm</code> · <code>md</code> · <code>lg</code>. States: default · hover · active · focus · disabled · loading.</p>
+<pre><code>&lt;Button variant="primary" size="lg" loading={isEncrypting}&gt;
+  Encrypt &amp; Upload
+&lt;/Button&gt;</code></pre>
+
+<h3>9.2 Input</h3>
+<p>Variants: <code>text</code> · <code>password</code> (with show/hide eye) · <code>number</code>. States: default · focus · error · disabled. ARIA: <code>aria-invalid</code>, <code>aria-describedby</code> for helper / error.</p>
+
+<h3>9.3 DropZone</h3>
+<p>States: <code>idle</code> · <code>drag-hover</code> · <code>rejected</code> · <code>file-selected</code> · <code>disabled</code>. Visual transitions per design spec (dashed→solid border, scaled icon).</p>
+
+<h3>9.4 TogglePill</h3>
+<p>Two-or-more-option segmented control. Used for security mode (F6) and TTL (F2).</p>
+<pre><code>&lt;TogglePill
+  value={ttl}
+  onChange={setTtl}
+  options={[{value:'1h',label:'1h'},{value:'24h',label:'24h'},
+            {value:'7d',label:'7d'},{value:'30d',label:'30d'}]}
+/&gt;</code></pre>
+
+<h3>9.5 ToggleSwitch</h3>
+<p>Binary on/off. Used for burn-after-read (F1). 32 px track, animated thumb, focus ring.</p>
+
+<h3>9.6 ProgressBar</h3>
+<p>Three-phase: <em>deriving key → encrypting → uploading</em>. Shimmer overlay while progress &lt; 100%. ARIA <code>role="progressbar"</code> with <code>aria-valuemin/max/now</code>.</p>
+
+<h3>9.7 ShareLink</h3>
+<p>Read-only input + copy button + QR popover (F9). Copy state animates to checkmark for 2 s. Click anywhere on the input selects all.</p>
+
+<h3>9.8 Toast</h3>
+<p>Four variants: success / error / warning / info. Auto-dismiss after 4 s; pause on hover; dismissible. Stacked top-right on desktop, bottom-centred on mobile.</p>
+
+<h3>9.9 Modal</h3>
+<p>Backdrop <code>bg-black/70 backdrop-blur-sm</code>. Focus trap. ESC to close. On mobile (&lt; 640px) it transforms to a bottom sheet with <code>rounded-t-2xl</code> and slide-up animation.</p>
+
+<h3>9.10 Badge / Chip</h3>
+<p>Variants: neutral · brand · success · warn · danger · new. Used for trust indicators ("AES-256-GCM"), file status, "Integrity verified".</p>
+
+<h3>9.11 FileTypeIcon</h3>
+<p>Colour-coded by MIME family: image (blue) · doc (purple) · zip (amber) · pdf (red) · video (green) · audio (pink) · text (slate) · generic (gray). 8+ types.</p>
+
+<h3>9.12 Spinner</h3>
+<p>Four sizes (16 / 20 / 32 / 40). Brand-coloured. Stroke-only style.</p>
+
+<!-- ============================================== -->
+<h2 id="s10"><span class="num">10</span>Screen Specifications</h2>
+
+<h3>10.1 Upload Page — Idle State</h3>
+<p>Full viewport, dark background <code>#0A0C12</code>. Subtle 3% noise overlay. Centred column, max width <strong>560 px</strong>.</p>
+
+<h4>Header (fixed, 60 px)</h4>
+<ul>
+  <li>Left: logo (28 px) + wordmark.</li>
+  <li>Right: <em>"How it works"</em> link + theme toggle icon button.</li>
+  <li>Background transparent → surface on scroll. Bottom border 0.5 px <code>--border</code>.</li>
+</ul>
+
+<h4>Hero</h4>
+<ul>
+  <li>Pill badge: <em>"Open Source · Zero Knowledge · Auditable"</em> — brand-dim background, 12 px Inter.</li>
+  <li>Headline (48 px Inter 600): <em>"Send files." / "No trace."</em> Second line gets <code>letter-spacing: 0.02em</code>.</li>
+  <li>Subheadline (16 px <code>--text-2</code>): two-line trust statement.</li>
+  <li>Trust badges row: <em>AES-256-GCM</em>, <em>Zero-Knowledge</em>, <em>Client-Side Only</em>.</li>
+</ul>
+
+<h4>Main Upload Card (glassmorphism)</h4>
+<p>Single glassmorphism surface: <code>background: rgba(18,21,31,0.85); backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.06);</code> Padding 32 px, radius 24 px.</p>
+
+<p>Sections in order:</p>
+<ol>
+  <li><strong>A — DropZone</strong> — three visual states (idle, drag-hover, file-selected).</li>
+  <li><strong>B — Security Mode Selector</strong> (F6) — TogglePill with Link+Password vs Link-Only.</li>
+  <li><strong>C — Password Input</strong> — visible only in F5 mode. Eye toggle, helper text, character dot indicator.</li>
+  <li><strong>D — Advanced Options</strong> — collapsible. Contains TTL segmented control (F2), burn-after-read toggle (F1), optional max-downloads input.</li>
+  <li><strong>E — Encrypt &amp; Upload button</strong> — primary, 48 px, full width.</li>
+</ol>
+
+<h3>10.2 Upload Page — Progress State</h3>
+<p>Card content fades out; progress UI fades in. Three sequential phases each with its own animated icon (rotating key → pulsing lock → floating cloud-upload), label (Inter 600 18 px), and sublabel (Inter 13 px monospace technical detail). Progress bar with shimmer overlay. Cancel link visible only during upload phase.</p>
+
+<h3>10.3 Upload Page — Success State</h3>
+<ul>
+  <li>Animated stroke-only check (400 ms circle draw + 200 ms tick draw) followed by a one-shot 600 ms confetti burst.</li>
+  <li>Heading: <em>"File encrypted &amp; ready"</em>.</li>
+  <li>ShareLink box (component 9.7) with QR popover.</li>
+  <li>Expiry chip: <em>clock icon + "Expires in 7 days"</em>.</li>
+  <li>Warning callout: <em>"This link contains the decryption key. Share it only via a private channel — do not post publicly."</em></li>
+  <li><strong>Delete-link box (F3)</strong> — separate row, less prominent than share link, with tooltip explaining the kill switch.</li>
+  <li><em>"Send another file"</em> link.</li>
+</ul>
+
+<h3>10.4 Viewer Page</h3>
+<p>State machine with six terminal states. Same dark background, centred 480 px card.</p>
+
+<table>
+<thead><tr><th>State</th><th>Trigger</th><th>UI</th></tr></thead>
+<tbody>
+<tr><td>Loading</td><td>Initial mount</td><td>Spinner + <em>"Preparing secure transfer…"</em></td></tr>
+<tr><td>Access Password Required</td><td>F5 flag set</td><td>Lock icon, password input, <em>"The sender protected this file."</em></td></tr>
+<tr><td>Password Required</td><td>F5 mode (encryption pwd)</td><td>Password input + <em>"Enter the password the sender gave you."</em></td></tr>
+<tr><td>Decrypting</td><td>After password</td><td>Animated padlock opens; <em>"Checking AES-GCM authentication tag"</em></td></tr>
+<tr><td>Ready</td><td>Auth tag verified</td><td>File icon, filename, integrity badge, optional preview, download button, optional burn warning, countdown</td></tr>
+<tr><td>Tampered</td><td>AEAD failure</td><td>Shield-X 64 px <code>--danger</code>, <em>"Integrity check failed"</em>, no download button</td></tr>
+<tr><td>Expired</td><td>HTTP 410</td><td>Clock 64 px <code>--warning</code>, <em>"This file has expired"</em>, "Send a file" CTA</td></tr>
+<tr><td>Not Found</td><td>HTTP 404</td><td>Generic not-found, <em>"This link is no longer valid."</em></td></tr>
+</tbody>
+</table>
+
+<h3>10.5 Status Page (F4)</h3>
+<p>Accessed via <code>/status/:fileId#deleteToken</code>. Card shows:</p>
+<ul>
+  <li>File status pill: <em>Active</em> · <em>Expired</em> · <em>Deleted</em></li>
+  <li>Upload time (humanised: "uploaded 12 minutes ago")</li>
+  <li>Download count (large number, brand-coloured)</li>
+  <li>First access time (or <em>"Not yet opened"</em>)</li>
+  <li>Time remaining (live countdown)</li>
+  <li>Burn-after-read indicator</li>
+  <li>Big red <strong>"Delete now"</strong> button (kill switch)</li>
+  <li>Auto-refresh every 30 s; visible "refreshing…" indicator</li>
+</ul>
+
+<h3>10.6 "How It Works" Modal (F11)</h3>
+<p>Three vertical animated steps (browser encrypts → server stores noise → key in fragment). Each with a primary icon, a paragraph for non-technical readers, and a monospace footnote for technical readers ("PBKDF2 · 100,000 iterations · SHA-256"). Bottom links: <em>Open source</em>, <em>Read the security audit</em>.</p>
+
+<h3>10.7 404 & Unsupported Browser Pages</h3>
+<p>404: large brand-coloured "404", <em>"Nothing here."</em>, animated subtle SVG grain, "Go home" link.<br>
+Unsupported: alert-triangle, list of minimum browser versions (Chrome 90+, Firefox 92+, Safari 15+, Edge 90+), banner if served over HTTP.</p>
+
+<!-- ============================================== -->
+<h2 id="s11"><span class="num">11</span>Feature Implementation Details</h2>
+
+<h3>F1 — Burn-After-Reading (frontend role)</h3>
+<p>Setting is sent as a public flag in upload settings. The viewer page reads the flag via the metadata endpoint and renders the amber warning callout above the download button. No additional frontend logic; deletion is purely server-driven.</p>
+
+<h3>F2 — Custom TTL</h3>
+<p>TogglePill component (4 options). On viewer side, <code>useCountdown(expiresAt)</code> hook drives a 1 Hz timer; falls back to <em>"Expires in &lt; 1 minute"</em> within the final 60 seconds; transitions to <em>Expired</em> state when the timer hits zero <strong>and</strong> the next backend call returns 410.</p>
+
+<h3>F3 — Sender Kill Switch</h3>
+<p>Upload result includes <code>deleteToken</code>. Frontend builds two URLs:</p>
+<pre><code>const shareUrl   = `${origin}/v/${fileId}#${fragment}`;
+const deleteUrl  = `${origin}/delete/${fileId}#${deleteToken}`;
+const statusUrl  = `${origin}/status/${fileId}#${deleteToken}`;</code></pre>
+<p>Delete page reads token from <code>location.hash</code> and on confirmation calls <code>DELETE /api/file/{id}?token=…</code>.</p>
+
+<h3>F4 — Download-Count Status</h3>
+<p>StatusPage polls <code>GET /api/status/{id}?token={deleteToken}</code> every 30 s with <code>setInterval</code>; cancelled on unmount. No personal data is fetched or rendered.</p>
+
+<h3>F5 — Access Password</h3>
+<p>At upload, after the sender enters an access password, the client:</p>
+<pre><code>const { verifier, salt, iv } = await crypto.buildAccessVerifier(accessPwd);
+// verifier is uploaded to server as opaque bytes</code></pre>
+<p>At viewer time, if <code>flags.hasAccessPassword</code> is true, the UI prompts for the access password and:</p>
+<pre><code>const ok = await crypto.checkAccessVerifier(input, verifier, salt, iv);
+if (!ok) setError('Incorrect password');</code></pre>
+<p>Critically, this round-trip never includes the password — the server cannot brute-force it because it does not see attempts.</p>
+
+<h3>F6 — Link-Only Mode</h3>
+<p>When selected, the client generates a fresh 256-bit AES-GCM key via <code>crypto.subtle.generateKey</code>, exports the raw bytes, base64url-encodes them and writes them into the fragment as <code>k.{rawKey}</code>. The recipient's viewer detects the <code>k.</code> prefix and skips the password prompt.</p>
+
+<h3>F7 — Multi-File / Folder Upload</h3>
+<p><code>src/lib/zip.ts</code> wraps JSZip:</p>
+<pre><code>export async function bundleFiles(files: File[]): Promise&lt;Uint8Array&gt; {
+  const zip = new JSZip();
+  for (const f of files) zip.file(f.webkitRelativePath || f.name, f);
+  return new Uint8Array(await zip.generateAsync({ type: 'arraybuffer' }));
+}</code></pre>
+<p>Bundled bytes feed the same encryption pipeline. The encrypted-metadata blob marks the content as <code>application/zip</code> with a synthetic filename (e.g. <code>shadowshare-bundle-2026-05-28.zip</code>).</p>
+
+<h3>F8 — Client-Side Preview</h3>
+<p>After successful decryption, <code>src/lib/preview.ts</code> inspects MIME:</p>
+<ul>
+  <li><code>image/*</code> → <code>URL.createObjectURL(new Blob([bytes], {type: mime}))</code> → <code>&lt;img&gt;</code> rendered into a contained <code>max-h-60</code> area. <code>URL.revokeObjectURL</code> on unmount.</li>
+  <li><code>application/pdf</code> → PDF.js renders page 1 only, into a canvas, from the in-memory Uint8Array.</li>
+  <li>Other MIME → no preview; <em>"No preview available — click Download"</em>.</li>
+</ul>
+
+<h3>F9 — QR Code</h3>
+<p>QR rendered into 200×200 canvas using the <code>qrcode</code> package with options:</p>
+<pre><code>{ errorCorrectionLevel: 'M',
+  margin: 1, scale: 6,
+  color: { dark: '#7C6EFA', light: '#0A0C12' } }</code></pre>
+
+<h3>F10 — Chunked Resumable Upload</h3>
+<p>See §7.1. Chunk failures are retried with exponential backoff (1s, 2s, 4s, 8s, max 3 retries) before surfacing to the user. Progress reported to <code>uploadStore</code> at chunk granularity.</p>
+
+<h3>F11 — How It Works modal</h3>
+<p>Implemented as a portal rendered via the Modal component. Animations are SVG path stroke animations; respects <code>prefers-reduced-motion</code>.</p>
+
+<h3>F12 — Theme system</h3>
+<p>See §12 for full details.</p>
+
+<h3>F13 — Security audit artefact</h3>
+<p>Not a frontend feature directly; the frontend exposes the <em>"Read the security audit"</em> link in the How It Works modal and in the footer, pointing to the <code>SECURITY.md</code> in the public GitHub repository.</p>
+
+<!-- ============================================== -->
+<h2 id="s12"><span class="num">12</span>Theme & Dark/Light Mode</h2>
+
+<p>Implementation lives in <code>src/state/themeStore.ts</code> and <code>src/hooks/useTheme.ts</code>.</p>
+
+<pre><code>// On first load (before React paints) — inline script in index.html:
+&lt;script&gt;
+  (function(){
+    var s = localStorage.getItem('shadowshare-theme') || 'system';
+    var resolved = s === 'system'
+      ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+      : s;
+    document.documentElement.dataset.theme = resolved;
+  })();
+&lt;/script&gt;</code></pre>
+
+<p>This inline blocking script prevents flash-of-wrong-theme. The Zustand store hydrates from <code>localStorage</code> after mount and stays in sync with <code>matchMedia</code> changes when <code>theme === 'system'</code>.</p>
+
+<p>Tailwind config:</p>
+<pre><code>// tailwind.config.ts
+darkMode: ['class', '[data-theme="dark"]']</code></pre>
+
+<!-- ============================================== -->
+<h2 id="s13"><span class="num">13</span>Accessibility</h2>
+
+<p>Target: <strong>WCAG 2.2 AA</strong>. Lighthouse accessibility score ≥ 95.</p>
+
+<ul>
+  <li>All interactive elements are reachable by keyboard; visible focus ring (<code>ring-2 ring-brand/60</code>).</li>
+  <li>All form fields have associated <code>&lt;label&gt;</code>; errors announced via <code>aria-live="polite"</code>.</li>
+  <li>The drop zone is a button (<code>role="button"</code>) and accepts <code>Enter</code> / <code>Space</code> to open the file picker.</li>
+  <li>Progress bar uses <code>role="progressbar"</code> with min/max/now.</li>
+  <li>Modal traps focus, restores focus to opener on close, closes on Escape.</li>
+  <li>Colour is never the sole signal — every state has icon + text + colour.</li>
+  <li><code>prefers-reduced-motion</code> disables non-essential animations (confetti, padlock opening, progress shimmer).</li>
+  <li>Minimum touch target 44 × 44 px on mobile.</li>
+  <li>Language declared in <code>&lt;html lang="en"&gt;</code>.</li>
+</ul>
+
+<!-- ============================================== -->
+<h2 id="s14"><span class="num">14</span>Performance Budget</h2>
+
+<table>
+<thead><tr><th>Metric</th><th>Budget</th><th>Enforcement</th></tr></thead>
+<tbody>
+<tr><td>Initial JS (gzipped)</td><td>≤ 180 KB</td><td>Vite bundle-analyzer; CI fails over budget</td></tr>
+<tr><td>Initial CSS (gzipped)</td><td>≤ 20 KB</td><td>Tailwind purge + CI check</td></tr>
+<tr><td>Total transfer for upload page</td><td>≤ 250 KB</td><td>Lighthouse</td></tr>
+<tr><td>Time to Interactive (cold, fast 4G)</td><td>≤ 1.5 s</td><td>Lighthouse</td></tr>
+<tr><td>LCP</td><td>≤ 1.8 s</td><td>Lighthouse</td></tr>
+<tr><td>CLS</td><td>≤ 0.05</td><td>Lighthouse</td></tr>
+<tr><td>Encryption throughput</td><td>≥ 200 MB/s</td><td>Manual benchmark, recorded in audit</td></tr>
+<tr><td>PDF.js loaded only on viewer route</td><td>Code-split</td><td>Vite manualChunks</td></tr>
+</tbody>
+</table>
+
+<!-- ============================================== -->
+<h2 id="s15"><span class="num">15</span>Browser Support</h2>
+
+<table>
+<thead><tr><th>Browser</th><th>Minimum</th><th>Rationale</th></tr></thead>
+<tbody>
+<tr><td>Chrome / Chromium</td><td>90+</td><td>Web Crypto AES-GCM stable, modern ES, top-level await</td></tr>
+<tr><td>Firefox</td><td>92+</td><td>Web Crypto, modern ES</td></tr>
+<tr><td>Safari</td><td>15+</td><td>Web Crypto stable; <code>webkitdirectory</code> works in 15.4+</td></tr>
+<tr><td>Edge (Chromium)</td><td>90+</td><td>Same as Chrome</td></tr>
+<tr><td>iOS Safari</td><td>15.4+</td><td>Web Crypto + folder uploads</td></tr>
+<tr><td>Internet Explorer</td><td>Not supported</td><td>No Web Crypto AES-GCM; redirected to <code>/unsupported</code></td></tr>
+</tbody>
+</table>
+
+<p>Capability check in <code>src/lib/browserSupport.ts</code>:</p>
+<pre><code>export function isSupported() {
+  if (!window.crypto?.subtle) return false;
+  if (typeof window.crypto.getRandomValues !== 'function') return false;
+  if (typeof structuredClone !== 'function') return false;
+  return true;
+}</code></pre>
+
+<!-- ============================================== -->
+<h2 id="s16"><span class="num">16</span>Frontend Security Guarantees</h2>
+
+<h3>16.1 What the frontend MUST do</h3>
+<ul>
+  <li>Encrypt all file bytes locally before any network call.</li>
+  <li>Generate IVs via <code>crypto.getRandomValues</code> with proven uniqueness.</li>
+  <li>Verify the GCM auth tag before exposing decrypted bytes to the UI.</li>
+  <li>Strip the URL fragment from any Sentry breadcrumb / error report.</li>
+  <li>Clear sensitive state on route change and on <code>beforeunload</code>.</li>
+</ul>
+
+<h3>16.2 What the frontend MUST NOT do</h3>
+<ul>
+  <li>Send the password, key, IV, or any plaintext byte to the server.</li>
+  <li>Register a service worker (would intercept fetches with fragment in scope).</li>
+  <li>Load any third-party JavaScript in the critical path (no analytics, no chat widget, no fonts CDN).</li>
+  <li>Store sensitive data in localStorage / sessionStorage / IndexedDB / cookies.</li>
+  <li>Use <code>eval</code>, <code>Function</code> constructor, or <code>dangerouslySetInnerHTML</code> — ESLint rules enforce.</li>
+</ul>
+
+<h3>16.3 Content Security Policy (frontend-facing)</h3>
+<pre><code>Content-Security-Policy:
+  default-src 'self';
+  script-src 'self';
+  style-src 'self' 'unsafe-inline';            // tailwind generates inline; reviewed
+  font-src 'self';
+  img-src 'self' data: blob:;                  // blob: required for in-memory previews
+  connect-src 'self';
+  frame-ancestors 'none';
+  base-uri 'self';
+  form-action 'none';
+  upgrade-insecure-requests;</code></pre>
+
+<!-- ============================================== -->
+<h2 id="s17"><span class="num">17</span>Testing</h2>
+
+<h3>17.1 Unit Tests (Vitest)</h3>
+<ul>
+  <li><code>crypto/kdf.test.ts</code> — PBKDF2 against RFC 6070 vectors.</li>
+  <li><code>crypto/aead.test.ts</code> — AES-GCM against NIST CAVP vectors.</li>
+  <li><code>crypto/iv.test.ts</code> — 1,000,000 IV uniqueness.</li>
+  <li><code>crypto/fragment.test.ts</code> — round-trip encode/decode for both modes.</li>
+  <li><code>crypto/verifier.test.ts</code> — wrong password rejected, right accepted.</li>
+  <li><code>state/uploadStore.test.ts</code> — state machine transitions.</li>
+  <li><code>lib/zip.test.ts</code> — bundle three files, unzip in test, assert byte identity.</li>
+  <li><code>lib/preview.test.ts</code> — image + PDF preview generation.</li>
+</ul>
+
+<h3>17.2 E2E (Playwright)</h3>
+<p>Run against a fully wired local stack (frontend + backend + LocalStack S3 + Postgres). Ten critical scenarios from §14.2 of the Master document.</p>
+
+<h3>17.3 Visual Regression</h3>
+<p>Playwright screenshot diffs for the upload, viewer, and success states in both light and dark themes.</p>
+
+<!-- ============================================== -->
+<h2 id="s18"><span class="num">18</span>Frontend Tickets</h2>
+
+<p>Frontend-owned tickets from the master ticket list, with concrete acceptance criteria.</p>
+
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-011</span><span class="ticket-title">React + Vite scaffold</span></div><div class="ticket-body">TS strict mode, router for <code>/</code>, <code>/v/:fileId</code>, <code>/status/:fileId</code>, <code>/delete/:fileId</code>. ESLint security rules enabled.<br><strong>AC:</strong> <code>pnpm dev</code> runs; <code>pnpm build</code> emits SRI hashes; <code>pnpm typecheck</code> clean.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-012</span><span class="ticket-title">Upload page</span></div><div class="ticket-body">Idle / progress / success states.<br><strong>AC:</strong> drag-drop, password input, encrypt flow visible, share link displayed, password cleared on unmount.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-013</span><span class="ticket-title">Viewer page</span></div><div class="ticket-body">All 8 states from §10.4.<br><strong>AC:</strong> tampered ciphertext shows error and offers no download.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-020-FE</span><span class="ticket-title">TTL segmented control</span><span class="badge new">v2.0</span></div><div class="ticket-body">F2.<br><strong>AC:</strong> default 7d; live countdown on viewer.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-023-FE</span><span class="ticket-title">Status page</span><span class="badge new">v2.0</span></div><div class="ticket-body">F4.<br><strong>AC:</strong> reads token from fragment, polls every 30s, never displays IP or recipient identifier.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-024-FE</span><span class="ticket-title">Access password verifier UI</span><span class="badge new">v2.0</span></div><div class="ticket-body">F5.<br><strong>AC:</strong> wrong password shows error without network call; right password reveals encryption-password prompt.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-025</span><span class="ticket-title">Link-only mode</span><span class="badge new">v2.0</span></div><div class="ticket-body">F6.<br><strong>AC:</strong> mode selector toggles; key embedded in fragment; viewer skips password prompt.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-026</span><span class="ticket-title">Multi-file / folder bundling</span><span class="badge new">v2.0</span></div><div class="ticket-body">F7.<br><strong>AC:</strong> upload 3 files → recipient downloads ZIP containing 3 byte-identical files.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-027</span><span class="ticket-title">In-memory preview</span><span class="badge new">v2.0</span></div><div class="ticket-body">F8.<br><strong>AC:</strong> PNG previews; PDF page 1 previews; no <code>indexeddb</code>/<code>filesystem</code> writes (verified via Chrome devtools).</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-028</span><span class="ticket-title">QR popover</span><span class="badge new">v2.0</span></div><div class="ticket-body">F9.<br><strong>AC:</strong> QR scans correctly on iOS / Android camera apps.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-029</span><span class="ticket-title">How It Works modal</span><span class="badge new">v2.0</span></div><div class="ticket-body">F11.<br><strong>AC:</strong> reachable from header; focus trap; animations respect reduced motion.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-030</span><span class="ticket-title">Theme system</span><span class="badge new">v2.0</span></div><div class="ticket-body">F12.<br><strong>AC:</strong> no FOUC on cold load; system / dark / light persisted; respects OS change live.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-031</span><span class="ticket-title">UI library (12 components)</span><span class="badge new">v2.0</span></div><div class="ticket-body">All 12 components from §9.<br><strong>AC:</strong> Storybook stories cover every documented state.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-034</span><span class="ticket-title">Tampered blob handling</span><span class="badge new">v2.0</span></div><div class="ticket-body">AEAD failure routes the viewer to the Tampered state; no download button rendered.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-035</span><span class="ticket-title">404 + Unsupported pages</span><span class="badge new">v2.0</span></div><div class="ticket-body">Both fully branded.<br><strong>AC:</strong> unsupported page shows min-versions table.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-036</span><span class="ticket-title">Accessibility pass</span><span class="badge new">v2.0</span></div><div class="ticket-body">WCAG 2.2 AA, Lighthouse a11y ≥ 95.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-037</span><span class="ticket-title">Mobile breakpoints</span><span class="badge new">v2.0</span></div><div class="ticket-body">Bottom sheet under 640 px; trust badges wrap; touch targets ≥ 44 px.</div></div>
+
+<div class="doc-footer">
+  <span>ShadowShare v2.0 — Frontend Specification</span>
+  <span>Confidential · Engineering · 2026</span>
+</div>
+
+</div>
+</body>
+</html>

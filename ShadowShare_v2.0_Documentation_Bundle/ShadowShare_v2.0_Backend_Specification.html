@@ -1,0 +1,1301 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ShadowShare v2.0 — Backend Specification</title>
+<style>
+/* ShadowShare Document Theme — shared across all 3 docs */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root{
+  --bg:#0A0C12; --surface:#12151F; --elevated:#1C2030; --border:#252A3A;
+  --brand:#7C6EFA; --brand-hover:#9B8FFB; --brand-dim:#2A2560;
+  --text:#EEF0F6; --text-2:#8B92A8; --text-3:#525869;
+  --success:#27D585; --warning:#F5A623; --danger:#EF5350;
+  --mono:'JetBrains Mono', ui-monospace, Menlo, monospace;
+  --sans:'Inter', -apple-system, system-ui, sans-serif;
+}
+
+@media print {
+  :root{
+    --bg:#ffffff; --surface:#ffffff; --elevated:#F7F8FA; --border:#E2E5EE;
+    --text:#0A0C12; --text-2:#3C4255; --text-3:#6B7185;
+    --brand-dim:#EEEBFF;
+  }
+  body{background:#fff !important; color:#0A0C12 !important;}
+  .no-print{display:none !important;}
+  .page-break{page-break-before:always;}
+  h1,h2,h3,h4{break-after:avoid;}
+  pre,table,figure{break-inside:avoid;}
+  a{color:#4E3FCE; text-decoration:none;}
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:var(--sans);
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.65;
+  font-size:14.5px;
+  -webkit-font-smoothing:antialiased;
+}
+
+.doc{max-width:880px; margin:0 auto; padding:60px 56px;}
+
+/* Cover page */
+.cover{
+  min-height:92vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:80px 56px;
+  border-bottom:1px solid var(--border);
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(124,110,250,0.08), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 50% 100%, rgba(39,213,133,0.04), transparent 70%);
+}
+.cover .eyebrow{
+  font-size:12px; letter-spacing:0.18em; text-transform:uppercase;
+  color:var(--brand-hover); font-weight:600; margin-bottom:24px;
+}
+.cover h1{
+  font-size:56px; font-weight:600; line-height:1.05;
+  margin:0 0 18px 0; letter-spacing:-0.02em;
+}
+.cover h1 .accent{color:var(--brand);}
+.cover .tagline{
+  font-size:20px; color:var(--text-2); font-weight:400;
+  max-width:560px; margin:0 0 48px 0;
+}
+.cover .meta-grid{
+  display:grid;
+  grid-template-columns:repeat(2, 1fr);
+  gap:0;
+  border:1px solid var(--border);
+  border-radius:10px;
+  overflow:hidden;
+  max-width:640px;
+  margin-top:32px;
+}
+.cover .meta-cell{
+  padding:18px 22px;
+  border-right:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+}
+.cover .meta-cell:nth-child(2n){border-right:none;}
+.cover .meta-cell:nth-last-child(-n+2){border-bottom:none;}
+.cover .meta-label{font-size:11px; color:var(--text-3); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:6px;}
+.cover .meta-value{font-size:15px; font-weight:500; color:var(--text);}
+
+.logo-mark{
+  display:inline-flex; align-items:center; gap:10px;
+  font-weight:600; font-size:18px;
+}
+.logo-mark svg{flex-shrink:0;}
+
+/* Headings */
+h1, h2, h3, h4, h5{font-family:var(--sans); color:var(--text); font-weight:600;}
+h2{
+  font-size:30px; margin-top:64px; margin-bottom:16px;
+  padding-bottom:12px; border-bottom:1px solid var(--border);
+  letter-spacing:-0.01em;
+}
+h2 .num{color:var(--brand); font-weight:500; margin-right:14px;}
+h3{font-size:21px; margin-top:42px; margin-bottom:12px; letter-spacing:-0.005em;}
+h4{font-size:16px; margin-top:28px; margin-bottom:8px; color:var(--text);}
+h5{font-size:13px; margin:18px 0 6px 0; color:var(--text-2); text-transform:uppercase; letter-spacing:0.08em;}
+
+p{margin:10px 0 14px 0; color:var(--text);}
+strong{color:var(--text); font-weight:600;}
+em{color:var(--text-2);}
+
+/* Links */
+a{color:var(--brand-hover); text-decoration:none; border-bottom:1px solid transparent;}
+a:hover{border-bottom-color:var(--brand-hover);}
+
+/* Code */
+code{
+  font-family:var(--mono); font-size:0.88em;
+  background:var(--elevated); color:var(--brand-hover);
+  padding:1.5px 6px; border-radius:4px; border:1px solid var(--border);
+}
+pre{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:18px 20px;
+  overflow-x:auto;
+  font-family:var(--mono);
+  font-size:12.5px;
+  line-height:1.6;
+  color:var(--text);
+}
+pre code{background:none; border:none; padding:0; color:inherit;}
+
+/* Tables */
+table{
+  width:100%; border-collapse:collapse; margin:18px 0 22px 0;
+  font-size:13.5px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  overflow:hidden;
+}
+thead{background:var(--elevated);}
+th{
+  text-align:left; padding:12px 16px; font-weight:600;
+  font-size:12px; text-transform:uppercase; letter-spacing:0.06em;
+  color:var(--text-2); border-bottom:1px solid var(--border);
+}
+td{padding:11px 16px; border-bottom:1px solid var(--border); color:var(--text); vertical-align:top;}
+tr:last-child td{border-bottom:none;}
+tr:nth-child(even) td{background:rgba(28,32,48,0.35);}
+@media print{tr:nth-child(even) td{background:#FAFBFD;}}
+
+/* Lists */
+ul, ol{padding-left:22px; margin:10px 0 16px 0;}
+li{margin:5px 0; color:var(--text);}
+li::marker{color:var(--brand);}
+
+/* Callouts */
+.callout{
+  margin:20px 0;
+  padding:16px 20px;
+  border-radius:8px;
+  border-left:3px solid var(--brand);
+  background:rgba(124,110,250,0.06);
+  font-size:13.5px;
+  color:var(--text);
+}
+.callout.warn{border-left-color:var(--warning); background:rgba(245,166,35,0.06);}
+.callout.danger{border-left-color:var(--danger); background:rgba(239,83,80,0.06);}
+.callout.success{border-left-color:var(--success); background:rgba(39,213,133,0.06);}
+.callout .ctitle{font-weight:600; margin-bottom:4px; font-size:13px; text-transform:uppercase; letter-spacing:0.06em;}
+.callout.warn .ctitle{color:var(--warning);}
+.callout.danger .ctitle{color:var(--danger);}
+.callout.success .ctitle{color:var(--success);}
+.callout .ctitle{color:var(--brand-hover);}
+
+/* Badges */
+.badge{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:3px 10px; font-size:11.5px; font-weight:500;
+  border-radius:9999px;
+  border:1px solid var(--border);
+  background:var(--elevated); color:var(--text-2);
+  letter-spacing:0.02em;
+}
+.badge.brand{background:var(--brand-dim); border-color:rgba(124,110,250,0.4); color:var(--brand-hover);}
+.badge.success{background:rgba(39,213,133,0.1); border-color:rgba(39,213,133,0.3); color:var(--success);}
+.badge.warn{background:rgba(245,166,35,0.1); border-color:rgba(245,166,35,0.3); color:var(--warning);}
+.badge.danger{background:rgba(239,83,80,0.1); border-color:rgba(239,83,80,0.3); color:var(--danger);}
+.badge.new{background:rgba(124,110,250,0.18); border-color:rgba(124,110,250,0.5); color:var(--brand-hover);}
+
+/* TOC */
+.toc{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:24px 28px;
+  margin:32px 0 0 0;
+}
+.toc h3{margin-top:0; font-size:14px; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-2);}
+.toc ol{list-style:none; padding-left:0; counter-reset:toc;}
+.toc ol li{counter-increment:toc; padding:5px 0; border-bottom:1px dashed var(--border); display:flex; justify-content:space-between; font-size:13.5px;}
+.toc ol li:last-child{border-bottom:none;}
+.toc ol li::before{content:counter(toc, decimal) ". "; color:var(--brand); font-weight:500; margin-right:10px;}
+.toc a{flex:1; color:var(--text);}
+.toc .pgnum{color:var(--text-3); font-family:var(--mono); font-size:12px;}
+
+/* Feature cards */
+.feature-grid{
+  display:grid;
+  grid-template-columns:repeat(2, 1fr);
+  gap:14px;
+  margin:18px 0 24px 0;
+}
+.feat{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:18px 20px;
+}
+.feat .ftitle{
+  display:flex; align-items:center; justify-content:space-between;
+  font-weight:600; font-size:14.5px; margin-bottom:8px; color:var(--text);
+}
+.feat .fdesc{font-size:13px; color:var(--text-2); line-height:1.55;}
+
+/* HTTP method tags */
+.http{
+  display:inline-block; font-family:var(--mono); font-size:11px;
+  font-weight:600; padding:3px 8px; border-radius:4px;
+  letter-spacing:0.04em; margin-right:8px;
+}
+.http.get{background:rgba(39,213,133,0.15); color:var(--success); border:1px solid rgba(39,213,133,0.3);}
+.http.post{background:rgba(124,110,250,0.15); color:var(--brand-hover); border:1px solid rgba(124,110,250,0.3);}
+.http.delete{background:rgba(239,83,80,0.15); color:var(--danger); border:1px solid rgba(239,83,80,0.3);}
+.http.put{background:rgba(245,166,35,0.15); color:var(--warning); border:1px solid rgba(245,166,35,0.3);}
+
+.endpoint{
+  background:var(--elevated);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:14px 18px;
+  margin:14px 0;
+  font-family:var(--mono);
+  font-size:13px;
+}
+
+/* Page footer */
+.doc-footer{
+  margin-top:80px; padding-top:24px;
+  border-top:1px solid var(--border);
+  display:flex; justify-content:space-between;
+  font-size:12px; color:var(--text-3);
+}
+
+/* Two-column flex */
+.row2{display:grid; grid-template-columns:1fr 1fr; gap:18px; margin:14px 0;}
+
+/* KV list */
+.kv{display:grid; grid-template-columns:200px 1fr; gap:8px 18px; margin:14px 0; font-size:13.5px;}
+.kv dt{color:var(--text-2); font-weight:500;}
+.kv dd{margin:0; color:var(--text); font-family:var(--mono); font-size:12.5px;}
+
+hr{border:none; border-top:1px solid var(--border); margin:36px 0;}
+
+/* Diagram boxes (ascii-art friendly) */
+.diagram{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:20px;
+  font-family:var(--mono);
+  font-size:12px;
+  line-height:1.5;
+  white-space:pre;
+  overflow-x:auto;
+  color:var(--text-2);
+}
+
+/* Ticket cards */
+.ticket{
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:16px 20px;
+  margin:14px 0;
+  background:var(--surface);
+}
+.ticket-head{
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:8px; flex-wrap:wrap; gap:8px;
+}
+.ticket-id{font-family:var(--mono); font-weight:600; color:var(--brand-hover); font-size:13px;}
+.ticket-title{font-weight:600; font-size:15px; flex:1;}
+.ticket-body{font-size:13px; color:var(--text-2); margin-top:6px;}
+.ticket-meta{font-size:11.5px; color:var(--text-3); margin-top:8px; display:flex; gap:14px;}
+
+</style>
+</head>
+<body>
+
+<!-- ============ COVER ============ -->
+<section class="cover">
+  <div class="logo-mark">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M8 12V9a6 6 0 0 1 11.5-2.4" stroke="#7C6EFA" stroke-width="2" stroke-linecap="round"/>
+      <rect x="5" y="12" width="18" height="13" rx="2.5" stroke="#7C6EFA" stroke-width="2"/>
+      <path d="M14 17v3" stroke="#7C6EFA" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    ShadowShare
+  </div>
+
+  <div class="eyebrow" style="margin-top:48px;">Backend Specification · v2.0</div>
+  <h1>The <span class="accent">blind vault.</span></h1>
+  <p class="tagline">A complete specification for the Python/Flask service that stores opaque ciphertext, enforces TTL, and exposes the rate-limited HTTPS API — without ever knowing what it holds.</p>
+
+  <div class="meta-grid">
+    <div class="meta-cell"><div class="meta-label">Framework</div><div class="meta-value">Flask 3.0</div></div>
+    <div class="meta-cell"><div class="meta-label">Language</div><div class="meta-value">Python 3.11+</div></div>
+    <div class="meta-cell"><div class="meta-label">WSGI</div><div class="meta-value">Gunicorn × 4</div></div>
+    <div class="meta-cell"><div class="meta-label">Database</div><div class="meta-value">PostgreSQL 15</div></div>
+    <div class="meta-cell"><div class="meta-label">Object Storage</div><div class="meta-value">DigitalOcean Spaces (S3)</div></div>
+    <div class="meta-cell"><div class="meta-label">Reverse Proxy</div><div class="meta-value">Nginx 1.24</div></div>
+  </div>
+
+  <div style="margin-top:40px; display:flex; gap:8px; flex-wrap:wrap;">
+    <span class="badge brand">Stateless</span>
+    <span class="badge brand">No Plaintext</span>
+    <span class="badge brand">Rate Limited</span>
+    <span class="badge brand">TTL-Enforced</span>
+  </div>
+</section>
+
+<div class="doc">
+
+<!-- TOC -->
+<div class="toc">
+  <h3>Table of Contents</h3>
+  <ol>
+    <li><a href="#s1">Backend Mission & Scope</a><span class="pgnum">§1</span></li>
+    <li><a href="#s2">Technology Stack</a><span class="pgnum">§2</span></li>
+    <li><a href="#s3">Service Architecture</a><span class="pgnum">§3</span></li>
+    <li><a href="#s4">Project Layout</a><span class="pgnum">§4</span></li>
+    <li><a href="#s5">Complete API Contracts</a><span class="pgnum">§5</span></li>
+    <li><a href="#s6">Database Schema & Migrations</a><span class="pgnum">§6</span></li>
+    <li><a href="#s7">Object Storage Layer</a><span class="pgnum">§7</span></li>
+    <li><a href="#s8">Chunked Upload Pipeline (F10)</a><span class="pgnum">§8</span></li>
+    <li><a href="#s9">Burn-After-Read Mechanism (F1)</a><span class="pgnum">§9</span></li>
+    <li><a href="#s10">Sender Tokens (F3, F4)</a><span class="pgnum">§10</span></li>
+    <li><a href="#s11">Background Jobs</a><span class="pgnum">§11</span></li>
+    <li><a href="#s12">Rate Limiting & Abuse Mitigation</a><span class="pgnum">§12</span></li>
+    <li><a href="#s13">Security Headers, CORS, CSP</a><span class="pgnum">§13</span></li>
+    <li><a href="#s14">Logging, Metrics, Observability</a><span class="pgnum">§14</span></li>
+    <li><a href="#s15">Configuration & Environment</a><span class="pgnum">§15</span></li>
+    <li><a href="#s16">Deployment Topology</a><span class="pgnum">§16</span></li>
+    <li><a href="#s17">CI/CD Pipeline</a><span class="pgnum">§17</span></li>
+    <li><a href="#s18">Disaster Recovery & Backups</a><span class="pgnum">§18</span></li>
+    <li><a href="#s19">Backend Testing Plan</a><span class="pgnum">§19</span></li>
+    <li><a href="#s20">Backend Tickets</a><span class="pgnum">§20</span></li>
+  </ol>
+</div>
+
+<!-- ============================================== -->
+<h2 id="s1"><span class="num">01</span>Backend Mission & Scope</h2>
+
+<p>The ShadowShare backend has exactly four responsibilities and nothing else:</p>
+<ol>
+  <li><strong>Accept opaque blobs</strong> uploaded by the client and persist them durably to object storage.</li>
+  <li><strong>Stream opaque blobs</strong> back to clients holding a valid <code>file_id</code>.</li>
+  <li><strong>Enforce ephemerality</strong> — TTL sweep, burn-after-read deletion, sender-initiated kill switch.</li>
+  <li><strong>Resist abuse</strong> — rate limiting, body-size caps, TLS, CORS, security headers.</li>
+</ol>
+
+<p>It is engineered so that someone with full administrator access to the server, the database, and the object store still cannot reconstruct a single user file. This is achieved by storing only ciphertext + opaque metadata; the absence of keys, passwords, and filenames is enforced by the database schema itself.</p>
+
+<div class="callout success">
+  <div class="ctitle">The blind vault rule</div>
+  Every backend change must answer the question: <em>"After this change, can the server still be subpoenaed for nothing useful?"</em> If the answer becomes "no", the change is rejected.
+</div>
+
+<!-- ============================================== -->
+<h2 id="s2"><span class="num">02</span>Technology Stack</h2>
+
+<table>
+<thead><tr><th>Layer</th><th>Tech</th><th>Version</th><th>Role</th></tr></thead>
+<tbody>
+<tr><td>Language</td><td>Python</td><td>3.11+</td><td>Mature stdlib; no FFI dependencies</td></tr>
+<tr><td>Web Framework</td><td>Flask</td><td>3.0</td><td>Small, auditable surface</td></tr>
+<tr><td>WSGI</td><td>Gunicorn</td><td>22.0</td><td>4 workers, sync mode</td></tr>
+<tr><td>Reverse Proxy</td><td>Nginx</td><td>1.24</td><td>TLS termination, static assets, rate limiting</td></tr>
+<tr><td>Database</td><td>PostgreSQL</td><td>15</td><td>Strict typing, TIMESTAMPTZ</td></tr>
+<tr><td>DB Driver</td><td>psycopg</td><td>3.x</td><td>Modern Postgres driver</td></tr>
+<tr><td>Migrations</td><td>Alembic</td><td>1.13</td><td>Versioned schema changes</td></tr>
+<tr><td>Object Storage</td><td>DigitalOcean Spaces</td><td>—</td><td>S3-compatible; private bucket</td></tr>
+<tr><td>S3 Client</td><td>boto3</td><td>1.34</td><td>Standard, audited</td></tr>
+<tr><td>Rate Limiter</td><td>Flask-Limiter</td><td>3.5</td><td>Redis-backed counters</td></tr>
+<tr><td>Cache / Counter Store</td><td>Redis</td><td>7</td><td>Distributed rate limit state</td></tr>
+<tr><td>Background Jobs</td><td>APScheduler</td><td>3.10</td><td>Hourly TTL sweep, session GC</td></tr>
+<tr><td>Validation</td><td>pydantic</td><td>2.x</td><td>Typed request/response models</td></tr>
+<tr><td>Logging</td><td>structlog</td><td>24.x</td><td>JSON structured logs</td></tr>
+<tr><td>Metrics</td><td>prometheus-flask-exporter</td><td>0.23</td><td>RED metrics</td></tr>
+<tr><td>Error tracking</td><td>Sentry</td><td>SDK 2.x</td><td>PII-scrubbed</td></tr>
+<tr><td>TLS</td><td>Let's Encrypt + Certbot</td><td>—</td><td>Auto-renewal</td></tr>
+<tr><td>Testing</td><td>pytest, testcontainers</td><td>8.x</td><td>Real Postgres + LocalStack S3</td></tr>
+</tbody>
+</table>
+
+<!-- ============================================== -->
+<h2 id="s3"><span class="num">03</span>Service Architecture</h2>
+
+<div class="diagram">                            ┌─────────────────┐
+        HTTPS  ─────────▶   │     Nginx       │  TLS, RL (10 r/s burst 20)
+                            └────────┬────────┘
+                                     │ loopback HTTP
+                                     ▼
+                            ┌─────────────────┐
+                            │  Gunicorn × 4   │
+                            └────────┬────────┘
+                                     │
+                                     ▼
+        ┌────────────────────────────────────────────────────────┐
+        │                   Flask 3.0 app                        │
+        │   ┌──────────────┐  ┌────────────┐  ┌──────────────┐   │
+        │   │ /api/upload  │  │ /api/file  │  │ /api/status  │   │
+        │   │ /api/delete  │  │ /api/health│  │ /api/meta    │   │
+        │   └──────┬───────┘  └─────┬──────┘  └──────┬───────┘   │
+        │          │                │                │           │
+        │   ┌──────▼────────────────▼────────────────▼──────┐    │
+        │   │            Service / Repository layer         │    │
+        │   └──────┬─────────────────┬──────────────────┬───┘    │
+        │          │                 │                  │        │
+        │   ┌──────▼─────┐    ┌──────▼─────┐     ┌──────▼─────┐  │
+        │   │ Postgres   │    │ DO Spaces  │     │  Redis     │  │
+        │   │ (metadata) │    │ (blobs)    │     │  (limits)  │  │
+        │   └────────────┘    └────────────┘     └────────────┘  │
+        │                                                        │
+        │   ┌────────────────────────────────────────────────┐   │
+        │   │ APScheduler (in-process) — hourly TTL sweep    │   │
+        │   │ runs on worker #0 only (advisory-lock guard)   │   │
+        │   └────────────────────────────────────────────────┘   │
+        └────────────────────────────────────────────────────────┘</div>
+
+<p>The service is fully stateless. Any worker can serve any request. The only piece of long-lived in-process state is the APScheduler instance, which is bound to a Postgres advisory lock so it runs on exactly one worker.</p>
+
+<!-- ============================================== -->
+<h2 id="s4"><span class="num">04</span>Project Layout</h2>
+
+<pre><code>shadowshare-api/
+├── app/
+│   ├── __init__.py              # Flask app factory
+│   ├── config.py                # Pydantic Settings (env-driven)
+│   ├── extensions.py            # db, limiter, scheduler, sentry init
+│   ├── api/
+│   │   ├── __init__.py
+│   │   ├── upload.py            # upload init/chunk/status/complete
+│   │   ├── file.py              # GET blob, GET meta
+│   │   ├── delete.py            # DELETE (kill switch)
+│   │   ├── status.py            # GET sender status
+│   │   └── health.py
+│   ├── models/
+│   │   ├── file.py              # SQLAlchemy or psycopg row classes
+│   │   └── session.py
+│   ├── services/
+│   │   ├── upload_service.py    # chunked upload state machine
+│   │   ├── file_service.py      # download, burn handling
+│   │   ├── delete_service.py
+│   │   ├── status_service.py
+│   │   └── storage.py           # S3 abstraction
+│   ├── jobs/
+│   │   ├── ttl_sweep.py
+│   │   └── session_gc.py
+│   ├── security/
+│   │   ├── headers.py           # security headers middleware
+│   │   ├── cors.py
+│   │   ├── tokens.py            # delete_token verification
+│   │   └── log_filters.py       # fragment/PII scrubbing
+│   └── schemas/                 # pydantic request/response models
+│       ├── upload.py
+│       ├── status.py
+│       └── errors.py
+├── migrations/                  # Alembic
+│   └── versions/
+├── tests/
+│   ├── unit/
+│   ├── integration/
+│   └── load/
+├── deploy/
+│   ├── nginx.conf
+│   ├── shadowshare.service      # systemd unit
+│   └── gunicorn.conf.py
+├── pyproject.toml
+├── requirements.txt
+└── README.md
+</code></pre>
+
+<!-- ============================================== -->
+<h2 id="s5"><span class="num">05</span>Complete API Contracts</h2>
+
+<p>All endpoints respond with JSON unless otherwise noted, use camelCase for response fields, and follow RFC 7807 problem details for errors. Authentication: none, by design — possession of <code>file_id</code> + <code>delete_token</code> is the entire credential model.</p>
+
+<h3>5.1 POST /api/upload/init</h3>
+<div class="endpoint"><span class="http post">POST</span> /api/upload/init</div>
+
+<p><strong>Purpose:</strong> Open a chunked upload session.</p>
+
+<h5>Request</h5>
+<pre><code>{
+  "totalSizeBytes": 73654321,
+  "totalChunks": 15,
+  "settings": {
+    "ttl": "7d",                      // one of: 1h | 24h | 7d | 30d
+    "burnAfterRead": false,
+    "hasAccessPassword": true,
+    "maxDownloads": null              // optional positive int
+  }
+}</code></pre>
+
+<h5>Response 201 Created</h5>
+<pre><code>{
+  "sessionId": "9a4f9c1b-...",
+  "chunkSizeBytes": 5242880,
+  "expiresAt": "2026-05-29T12:00:00Z"  // session expiry (24h)
+}</code></pre>
+
+<h5>Errors</h5>
+<table>
+<tbody>
+<tr><td><code>413 Payload Too Large</code></td><td>totalSizeBytes &gt; MAX_UPLOAD_BYTES</td></tr>
+<tr><td><code>422 Unprocessable Entity</code></td><td>TTL not in ALLOWED_TTLS, invalid settings</td></tr>
+<tr><td><code>429 Too Many Requests</code></td><td>Rate limit exceeded (10/h/IP)</td></tr>
+</tbody>
+</table>
+
+<h3>5.2 PUT /api/upload/chunk/{sessionId}/{index}</h3>
+<div class="endpoint"><span class="http put">PUT</span> /api/upload/chunk/{sessionId}/{index}</div>
+
+<p><strong>Purpose:</strong> Upload one chunk of opaque ciphertext.</p>
+
+<h5>Request</h5>
+<ul>
+  <li><strong>Headers:</strong> <code>Content-Type: application/octet-stream</code>, <code>Content-Length</code></li>
+  <li><strong>Body:</strong> raw bytes (≤ chunk size; last chunk may be smaller)</li>
+</ul>
+
+<h5>Response 204 No Content</h5>
+<p>Empty body. Server has persisted the chunk to the scratch area in Spaces and added <code>index</code> to the session's <code>received_chunks</code> array.</p>
+
+<h5>Errors</h5>
+<table>
+<tbody>
+<tr><td><code>404 Not Found</code></td><td>session does not exist or has expired</td></tr>
+<tr><td><code>409 Conflict</code></td><td>chunk index already received (idempotent — server still returns 204)</td></tr>
+<tr><td><code>413 Payload Too Large</code></td><td>chunk exceeds chunk_size_bytes</td></tr>
+<tr><td><code>416 Range Not Satisfiable</code></td><td>index out of bounds for totalChunks</td></tr>
+</tbody>
+</table>
+
+<h3>5.3 GET /api/upload/status/{sessionId}</h3>
+<div class="endpoint"><span class="http get">GET</span> /api/upload/status/{sessionId}</div>
+
+<h5>Response 200 OK</h5>
+<pre><code>{
+  "sessionId": "9a4f9c1b-...",
+  "totalChunks": 15,
+  "receivedChunks": [0, 1, 2, 3, 4, 5, 6, 7],
+  "nextChunkIndex": 8,
+  "expiresAt": "2026-05-29T12:00:00Z"
+}</code></pre>
+
+<h3>5.4 POST /api/upload/complete/{sessionId}</h3>
+<div class="endpoint"><span class="http post">POST</span> /api/upload/complete/{sessionId}</div>
+
+<p><strong>Purpose:</strong> Reassemble chunks into the final blob, persist final row, return file identifiers + delete token.</p>
+
+<h5>Request</h5>
+<pre><code>{
+  "encryptedMetadata": "&lt;base64 bytes&gt;",
+  "encryptionIv": "&lt;base64 bytes, 12 bytes&gt;",
+  "accessVerifier": {
+    "verifier": "&lt;base64 bytes&gt;",
+    "salt": "&lt;base64 bytes&gt;",
+    "iv": "&lt;base64 bytes&gt;"
+  }                                              // null if no access password
+}</code></pre>
+
+<h5>Response 201 Created</h5>
+<pre><code>{
+  "fileId": "8c4d1f2a-...",
+  "deleteToken": "Yz9...",         // 256-bit base64url; returned ONCE
+  "expiresAt": "2026-06-04T14:32:11Z",
+  "blobSizeBytes": 73654321
+}</code></pre>
+
+<h5>Errors</h5>
+<table>
+<tbody>
+<tr><td><code>409 Conflict</code></td><td>not all chunks received</td></tr>
+<tr><td><code>422 Unprocessable Entity</code></td><td>invalid metadata payload</td></tr>
+</tbody>
+</table>
+
+<h3>5.5 GET /api/file/{fileId}</h3>
+<div class="endpoint"><span class="http get">GET</span> /api/file/{fileId}</div>
+
+<p><strong>Purpose:</strong> Stream the opaque ciphertext blob.</p>
+
+<h5>Response 200 OK</h5>
+<ul>
+  <li><strong>Headers:</strong> <code>Content-Type: application/octet-stream</code>, <code>Content-Length</code>, <code>X-Blob-Size</code>, <code>Cache-Control: no-store</code></li>
+  <li><strong>Body:</strong> raw ciphertext bytes streamed from Spaces</li>
+</ul>
+
+<h5>Side effects</h5>
+<ul>
+  <li><code>download_count += 1</code> on successful stream completion.</li>
+  <li><code>first_accessed_at = COALESCE(first_accessed_at, NOW())</code>.</li>
+  <li>If <code>burn_after_read = true</code>: server registers a <code>call_on_close</code> hook that deletes the blob and the row atomically once the response is fully flushed.</li>
+</ul>
+
+<h5>Errors</h5>
+<table>
+<tbody>
+<tr><td><code>404 Not Found</code></td><td>file_id does not exist</td></tr>
+<tr><td><code>410 Gone</code></td><td>file expired, deleted, or burned</td></tr>
+<tr><td><code>429 Too Many Requests</code></td><td>60/minute/IP limit</td></tr>
+</tbody>
+</table>
+
+<h3>5.6 GET /api/file/{fileId}/meta</h3>
+<div class="endpoint"><span class="http get">GET</span> /api/file/{fileId}/meta</div>
+
+<p><strong>Purpose:</strong> Fetch the small encrypted metadata + public flags so the viewer can render the correct UI before downloading the full blob.</p>
+
+<h5>Response 200 OK</h5>
+<pre><code>{
+  "fileId": "8c4d1f2a-...",
+  "blobSizeBytes": 73654321,
+  "expiresAt": "2026-06-04T14:32:11Z",
+  "burnAfterRead": false,
+  "hasAccessPassword": true,
+  "encryptedMetadata": "&lt;base64&gt;",
+  "encryptionIv": "&lt;base64&gt;",
+  "accessVerifier": {
+    "verifier": "&lt;base64&gt;",
+    "salt": "&lt;base64&gt;",
+    "iv": "&lt;base64&gt;"
+  }
+}</code></pre>
+
+<h3>5.7 DELETE /api/file/{fileId}</h3>
+<div class="endpoint"><span class="http delete">DELETE</span> /api/file/{fileId}?token={deleteToken}</div>
+
+<p><strong>Purpose:</strong> Sender kill switch (F3).</p>
+
+<h5>Server logic</h5>
+<pre><code>computed = sha256(token).digest()
+if not hmac.compare_digest(row.delete_token_hash, computed):
+    return 403
+delete blob from Spaces
+delete row from Postgres
+return 204</code></pre>
+
+<h5>Errors</h5>
+<table>
+<tbody>
+<tr><td><code>403 Forbidden</code></td><td>token mismatch</td></tr>
+<tr><td><code>404 Not Found</code></td><td>file_id does not exist</td></tr>
+<tr><td><code>410 Gone</code></td><td>already deleted / expired</td></tr>
+</tbody>
+</table>
+
+<h3>5.8 GET /api/status/{fileId}</h3>
+<div class="endpoint"><span class="http get">GET</span> /api/status/{fileId}?token={deleteToken}</div>
+
+<p><strong>Purpose:</strong> Sender status (F4). The <code>deleteToken</code> doubles as the read-status capability — anyone who has the delete token by definition is the sender.</p>
+
+<h5>Response 200 OK</h5>
+<pre><code>{
+  "fileId": "8c4d1f2a-...",
+  "status": "active",                   // active | expired | deleted
+  "createdAt": "2026-05-28T14:32:11Z",
+  "expiresAt": "2026-06-04T14:32:11Z",
+  "downloadCount": 2,
+  "firstAccessedAt": "2026-05-28T15:11:03Z",
+  "burnAfterRead": false,
+  "hasAccessPassword": true
+}</code></pre>
+
+<div class="callout warn">
+  <div class="ctitle">Privacy guarantee on status</div>
+  This endpoint <strong>never</strong> returns recipient identifying data — no IPs, user agents, geolocations, referrers. None of those are stored in the first place. The fields above are the complete schema.
+</div>
+
+<h3>5.9 GET /api/health</h3>
+<div class="endpoint"><span class="http get">GET</span> /api/health</div>
+
+<h5>Response 200 OK</h5>
+<pre><code>{ "status": "ok", "version": "2.0.0", "uptime_seconds": 4128 }</code></pre>
+
+<h3>5.10 Standard Error Envelope (RFC 7807)</h3>
+<pre><code>{
+  "type": "https://shadowshare.io/errors/rate-limit",
+  "title": "Too Many Requests",
+  "status": 429,
+  "detail": "Upload limit of 10 per hour exceeded.",
+  "retryAfter": 1342
+}</code></pre>
+
+<!-- ============================================== -->
+<h2 id="s6"><span class="num">06</span>Database Schema & Migrations</h2>
+
+<h3>6.1 Initial Migration</h3>
+<pre><code>-- migrations/versions/0001_initial.sql
+
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+CREATE TABLE files (
+    file_id              UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+    blob_path            VARCHAR(500) NOT NULL UNIQUE,
+    blob_size_bytes      BIGINT       NOT NULL,
+    created_at           TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    expires_at           TIMESTAMPTZ  NOT NULL,
+    download_count       INTEGER      NOT NULL DEFAULT 0,
+    first_accessed_at    TIMESTAMPTZ  NULL,
+    burn_after_read      BOOLEAN      NOT NULL DEFAULT FALSE,
+    burned               BOOLEAN      NOT NULL DEFAULT FALSE,
+    has_access_password  BOOLEAN      NOT NULL DEFAULT FALSE,
+    access_verifier      BYTEA        NULL,
+    access_verifier_salt BYTEA        NULL,
+    access_verifier_iv   BYTEA        NULL,
+    encrypted_metadata   BYTEA        NOT NULL,
+    encryption_iv        BYTEA        NOT NULL,
+    delete_token_hash    BYTEA        NOT NULL,
+    max_downloads        INTEGER      NULL,
+    CHECK (blob_size_bytes &gt; 0 AND blob_size_bytes &lt;= 1073741824),
+    CHECK (octet_length(encryption_iv) = 12),
+    CHECK (octet_length(delete_token_hash) = 32)
+);
+CREATE INDEX idx_files_expires_at ON files (expires_at);
+CREATE INDEX idx_files_burned     ON files (burned) WHERE burned = TRUE;
+
+CREATE TABLE upload_sessions (
+    session_id           UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+    total_size_bytes     BIGINT       NOT NULL,
+    total_chunks         INTEGER      NOT NULL,
+    chunk_size_bytes     INTEGER      NOT NULL DEFAULT 5242880,
+    received_chunks      INTEGER[]    NOT NULL DEFAULT '{}',
+    scratch_prefix       VARCHAR(500) NOT NULL,    -- Spaces key prefix
+    settings             JSONB        NOT NULL,
+    created_at           TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    expires_at           TIMESTAMPTZ  NOT NULL DEFAULT NOW() + INTERVAL '24 hours',
+    completed_at         TIMESTAMPTZ  NULL
+);
+CREATE INDEX idx_sessions_expires ON upload_sessions (expires_at);</code></pre>
+
+<h3>6.2 What is intentionally absent</h3>
+
+<table>
+<thead><tr><th>Absent column</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td><code>filename</code></td><td>Stored inside <code>encrypted_metadata</code> (opaque ciphertext)</td></tr>
+<tr><td><code>content_type</code></td><td>Same as above</td></tr>
+<tr><td><code>uploader_ip</code></td><td>Never logged or persisted</td></tr>
+<tr><td><code>recipient_ip</code></td><td>Never logged or persisted</td></tr>
+<tr><td><code>password / password_hash</code></td><td>Server never sees password</td></tr>
+<tr><td><code>encryption_key</code></td><td>Lives only in URL fragment, in client memory</td></tr>
+<tr><td><code>kdf_salt</code></td><td>Lives in URL fragment</td></tr>
+<tr><td><code>delete_token (plaintext)</code></td><td>Only SHA-256 hash persisted</td></tr>
+</tbody>
+</table>
+
+<h3>6.3 Least-Privilege DB User</h3>
+<pre><code>CREATE USER shadowshare_app WITH PASSWORD '...';
+GRANT CONNECT ON DATABASE shadowshare TO shadowshare_app;
+GRANT USAGE ON SCHEMA public TO shadowshare_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON files, upload_sessions TO shadowshare_app;
+-- No DDL, no superuser, no createdb.</code></pre>
+
+<!-- ============================================== -->
+<h2 id="s7"><span class="num">07</span>Object Storage Layer</h2>
+
+<h3>7.1 Bucket Configuration</h3>
+<ul>
+  <li><strong>Region:</strong> <code>nyc3</code> (or chosen region).</li>
+  <li><strong>Visibility:</strong> Private. No public-read ACL anywhere.</li>
+  <li><strong>Access:</strong> Single IAM/Spaces key pair scoped to this bucket only.</li>
+  <li><strong>CORS:</strong> No browser direct access to Spaces — clients only ever talk to the Flask API. The API streams from Spaces.</li>
+  <li><strong>Lifecycle:</strong> A safety-net 35-day lifecycle rule auto-deletes any orphan object (the application-level TTL sweep should always beat this).</li>
+</ul>
+
+<h3>7.2 Key Naming Convention</h3>
+<pre><code>blobs/{yyyy}/{mm}/{dd}/{file_id}.bin           # final blobs
+sessions/{session_id}/chunks/{index}.part       # scratch chunks during chunked upload</code></pre>
+
+<h3>7.3 Storage Service Interface</h3>
+<pre><code># app/services/storage.py
+class BlobStore:
+    def put_chunk(self, session_id: str, index: int, data: bytes) -&gt; None
+    def assemble(self, session_id: str, total_chunks: int, file_id: str) -&gt; str  # returns blob_path
+    def stream_blob(self, blob_path: str) -&gt; Iterator[bytes]
+    def delete_blob(self, blob_path: str) -&gt; None
+    def delete_session_scratch(self, session_id: str) -&gt; None</code></pre>
+
+<h3>7.4 Assemble Operation</h3>
+<p>For files up to 100 MB v1, <code>assemble</code> streams each chunk in order and uploads the concatenation as a single PutObject. For larger files (v2.1 roadmap, up to 1 GB), it switches to S3 multipart upload, treating each scratch chunk as one upload part.</p>
+
+<!-- ============================================== -->
+<h2 id="s8"><span class="num">08</span>Chunked Upload Pipeline (F10)</h2>
+
+<h3>8.1 State Machine</h3>
+<div class="diagram">  ┌──────────────┐  init   ┌──────────────┐ chunk(0..n-1) ┌──────────────┐ complete  ┌──────────────┐
+  │   (none)     ├────────▶│ Session open ├──────────────▶│ All chunks   ├──────────▶│ File row     │
+  └──────────────┘         └──────┬───────┘  (idempotent) │ received     │           │ persisted    │
+                                  │                       └──────┬───────┘           └──────────────┘
+                                  │ 24h timeout                  │
+                                  ▼                              ▼ session_gc
+                          ┌──────────────┐               ┌──────────────┐
+                          │ Session      │               │ Scratch GC'd │
+                          │ expired      │               └──────────────┘
+                          └──────────────┘
+</div>
+
+<h3>8.2 Concurrency & Idempotency</h3>
+<ul>
+  <li>Chunk uploads use <code>UPDATE upload_sessions SET received_chunks = array_append(received_chunks, $1) WHERE NOT $1 = ANY(received_chunks)</code> for atomic dedupe.</li>
+  <li>The complete endpoint takes a row-level lock: <code>SELECT … FROM upload_sessions WHERE session_id = $1 FOR UPDATE</code>.</li>
+  <li>Out-of-order chunks are accepted; only the final reassembly requires all indices present.</li>
+</ul>
+
+<h3>8.3 Resume Logic</h3>
+<p><code>GET /api/upload/status/{sessionId}</code> returns the array; the client computes <code>nextChunkIndex</code> as the lowest missing integer in <code>[0, totalChunks)</code> and resumes from there.</p>
+
+<!-- ============================================== -->
+<h2 id="s9"><span class="num">09</span>Burn-After-Read Mechanism (F1)</h2>
+
+<p>The challenge: deletion must happen <em>only</em> after the byte stream completes successfully, not when the response headers go out.</p>
+
+<h3>9.1 Implementation</h3>
+<pre><code>@bp.get('/api/file/&lt;uuid:file_id&gt;')
+def get_file(file_id):
+    row = file_service.load_for_read(file_id)
+    if row is None: abort(404)
+    if row.burned or row.expires_at &lt; utcnow(): abort(410)
+
+    def stream():
+        bytes_sent = 0
+        for chunk in storage.stream_blob(row.blob_path):
+            bytes_sent += len(chunk)
+            yield chunk
+        # Generator exhausted => stream completed without exception
+        file_service.on_download_complete(row, bytes_sent)
+
+    response = Response(stream(), mimetype='application/octet-stream')
+    response.headers['Content-Length'] = str(row.blob_size_bytes)
+    response.headers['X-Blob-Size']   = str(row.blob_size_bytes)
+    response.headers['Cache-Control'] = 'no-store'
+    return response
+
+# file_service.on_download_complete:
+def on_download_complete(row, bytes_sent):
+    if bytes_sent != row.blob_size_bytes:
+        return                       # client aborted; do NOT burn
+    with db.transaction():
+        db.execute("UPDATE files SET download_count = download_count + 1, "
+                   "first_accessed_at = COALESCE(first_accessed_at, NOW()) "
+                   "WHERE file_id = %s", [row.file_id])
+        if row.burn_after_read:
+            db.execute("UPDATE files SET burned = TRUE WHERE file_id = %s", [row.file_id])
+    if row.burn_after_read:
+        storage.delete_blob(row.blob_path)
+        with db.transaction():
+            db.execute("DELETE FROM files WHERE file_id = %s", [row.file_id])</code></pre>
+
+<h3>9.2 Race protection</h3>
+<p>Two concurrent downloads racing on a burn-after-read file are serialised by a per-row Postgres advisory lock:</p>
+<pre><code>SELECT pg_advisory_xact_lock(hashtext(file_id::text));</code></pre>
+<p>The losing transaction observes <code>burned = TRUE</code> and returns 410.</p>
+
+<!-- ============================================== -->
+<h2 id="s10"><span class="num">10</span>Sender Tokens (F3, F4)</h2>
+
+<h3>10.1 Token Generation</h3>
+<pre><code># app/security/tokens.py
+import secrets, hashlib
+
+def issue_delete_token() -&gt; tuple[str, bytes]:
+    raw = secrets.token_bytes(32)              # 256-bit
+    encoded = base64.urlsafe_b64encode(raw).rstrip(b'=').decode()
+    return encoded, hashlib.sha256(raw).digest()</code></pre>
+
+<h3>10.2 Token Verification</h3>
+<pre><code>def verify_delete_token(encoded: str, stored_hash: bytes) -&gt; bool:
+    try:
+        raw = base64.urlsafe_b64decode(encoded + '==')
+    except Exception:
+        return False
+    computed = hashlib.sha256(raw).digest()
+    return hmac.compare_digest(stored_hash, computed)   # constant-time</code></pre>
+
+<h3>10.3 Token Reuse</h3>
+<p>The same <code>delete_token</code> grants two capabilities: revoke (DELETE) and status (GET /api/status). This is intentional and equivalent in trust scope: anyone holding the token is the sender.</p>
+
+<!-- ============================================== -->
+<h2 id="s11"><span class="num">11</span>Background Jobs</h2>
+
+<h3>11.1 Hourly TTL Sweep</h3>
+<pre><code># app/jobs/ttl_sweep.py
+def run():
+    with db.session() as s:
+        # Acquire a Postgres advisory lock so only one worker runs the sweep
+        got = s.execute("SELECT pg_try_advisory_lock(742019)").scalar()
+        if not got: return
+        try:
+            rows = s.execute(
+                "SELECT file_id, blob_path FROM files "
+                "WHERE expires_at &lt; NOW() OR burned = TRUE LIMIT 500"
+            ).fetchall()
+            for r in rows:
+                storage.delete_blob(r.blob_path)
+                s.execute("DELETE FROM files WHERE file_id = %s", [r.file_id])
+            s.commit()
+        finally:
+            s.execute("SELECT pg_advisory_unlock(742019)")</code></pre>
+
+<h3>11.2 Daily Session GC</h3>
+<p>Deletes upload sessions older than 24 hours along with their scratch chunks in Spaces. Same advisory-lock pattern.</p>
+
+<h3>11.3 Scheduler Configuration</h3>
+<pre><code># app/extensions.py
+scheduler = BackgroundScheduler(timezone='UTC')
+scheduler.add_job(ttl_sweep.run,    'interval', hours=1, id='ttl_sweep',  max_instances=1)
+scheduler.add_job(session_gc.run,   'interval', hours=6, id='session_gc', max_instances=1)
+scheduler.start()</code></pre>
+
+<!-- ============================================== -->
+<h2 id="s12"><span class="num">12</span>Rate Limiting & Abuse Mitigation</h2>
+
+<h3>12.1 Limits</h3>
+
+<table>
+<thead><tr><th>Endpoint</th><th>Limit</th><th>Scope</th></tr></thead>
+<tbody>
+<tr><td>POST /api/upload/init</td><td>10 / hour</td><td>per IP</td></tr>
+<tr><td>PUT /api/upload/chunk/*</td><td>500 / hour</td><td>per IP (covers a 100MB file at 5MB chunks × many retries)</td></tr>
+<tr><td>POST /api/upload/complete/*</td><td>20 / hour</td><td>per IP</td></tr>
+<tr><td>GET /api/file/{id}</td><td>60 / minute</td><td>per IP</td></tr>
+<tr><td>GET /api/file/{id}/meta</td><td>120 / minute</td><td>per IP</td></tr>
+<tr><td>DELETE /api/file/{id}</td><td>30 / minute</td><td>per IP</td></tr>
+<tr><td>GET /api/status/{id}</td><td>120 / minute</td><td>per IP</td></tr>
+</tbody>
+</table>
+
+<p>Counters live in Redis with sliding-window precision. When a limit is exceeded the server returns <code>429 Too Many Requests</code> with a <code>Retry-After</code> header.</p>
+
+<h3>12.2 Body Size Enforcement (three layers)</h3>
+<ol>
+  <li><strong>Nginx:</strong> <code>client_max_body_size 105m;</code> (room for 100 MB + a little overhead).</li>
+  <li><strong>Flask:</strong> <code>MAX_CONTENT_LENGTH = 104_857_600</code>.</li>
+  <li><strong>DB:</strong> <code>CHECK (blob_size_bytes &lt;= 1073741824)</code> — accepts up to 1 GB at schema level; the app config narrows this for v2.0.</li>
+</ol>
+
+<h3>12.3 Fail2ban</h3>
+<p>Jail <code>nginx-limit-req</code> watches the Nginx error log for rate-limit triggers and bans IPs producing &gt; 50 rejections per 10 minutes for 1 hour.</p>
+
+<h3>12.4 Abuse takedown</h3>
+<p>Because the server cannot read content, the abuse-handling policy is published as: <em>(a)</em> we ban file IDs reported through the documented abuse channel, <em>(b)</em> we cannot inspect or filter content, and <em>(c)</em> the sender can revoke any file they uploaded with their delete token.</p>
+
+<!-- ============================================== -->
+<h2 id="s13"><span class="num">13</span>Security Headers, CORS, CSP</h2>
+
+<h3>13.1 Headers (set by Nginx + reinforced by Flask middleware)</h3>
+<pre><code>Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';
+                         img-src 'self' data: blob:; font-src 'self'; connect-src 'self';
+                         frame-ancestors 'none'; base-uri 'self'; form-action 'none';
+                         upgrade-insecure-requests
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+Referrer-Policy: no-referrer
+Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=(), usb=(),
+                    interest-cohort=(), browsing-topics=()
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: same-origin
+Cache-Control: no-store    (on /api/*)</code></pre>
+
+<h3>13.2 CORS</h3>
+<pre><code>Access-Control-Allow-Origin: https://shadowshare.io
+Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type
+Access-Control-Max-Age: 600</code></pre>
+<p>No wildcard. The single allowed origin is configured via <code>ALLOWED_ORIGIN</code> env var.</p>
+
+<h3>13.3 TLS Configuration (Nginx)</h3>
+<pre><code>ssl_protocols TLSv1.3 TLSv1.2;
+ssl_ciphers ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:...;
+ssl_prefer_server_ciphers off;
+ssl_session_cache shared:SSL:50m;
+ssl_session_timeout 1d;
+ssl_session_tickets off;
+ssl_stapling on;
+ssl_stapling_verify on;
+add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload";</code></pre>
+
+<p>Target: <strong>SSL Labs A+</strong>. Reassessed weekly via CI.</p>
+
+<!-- ============================================== -->
+<h2 id="s14"><span class="num">14</span>Logging, Metrics, Observability</h2>
+
+<h3>14.1 What we log</h3>
+<table>
+<thead><tr><th>Event</th><th>Fields</th></tr></thead>
+<tbody>
+<tr><td>Upload init</td><td>session_id, totalSizeBytes, ttl, chunkCount, request_id</td></tr>
+<tr><td>Upload chunk</td><td>session_id, chunk_index, chunk_size, latency_ms</td></tr>
+<tr><td>Upload complete</td><td>file_id, blob_size, request_id</td></tr>
+<tr><td>Download</td><td>file_id, bytes_sent, status (complete/aborted), latency_ms</td></tr>
+<tr><td>Delete (kill switch)</td><td>file_id, outcome</td></tr>
+<tr><td>TTL sweep</td><td>rows_deleted, blobs_deleted, duration_ms</td></tr>
+<tr><td>Rate limit</td><td>endpoint, ip_hash (truncated SHA-256), limit_name</td></tr>
+</tbody>
+</table>
+
+<h3>14.2 What we never log</h3>
+<ul>
+  <li>Request bodies of any sort.</li>
+  <li>The URL fragment of any URL (referer header is stripped at Nginx).</li>
+  <li>Encrypted blob bytes (not even size in error scenarios where bytes might appear).</li>
+  <li>Delete token values — only hashed values appear in any context.</li>
+  <li>Raw client IP. We hash IPs with a daily-rotating salt for rate-limit forensics; the salt is shredded after 24 hours.</li>
+</ul>
+
+<h3>14.3 Log Filter</h3>
+<pre><code># app/security/log_filters.py
+class FragmentStripperFilter(logging.Filter):
+    URL_FRAGMENT = re.compile(r'#[^\s"&apos;]+')
+    def filter(self, record):
+        if isinstance(record.msg, str):
+            record.msg = self.URL_FRAGMENT.sub('#&lt;redacted&gt;', record.msg)
+        return True</code></pre>
+
+<h3>14.4 Metrics (Prometheus)</h3>
+<ul>
+  <li><code>shadowshare_uploads_total{result}</code></li>
+  <li><code>shadowshare_downloads_total{result}</code></li>
+  <li><code>shadowshare_blob_bytes_total{direction}</code></li>
+  <li><code>shadowshare_ttl_sweep_rows_deleted_total</code></li>
+  <li><code>shadowshare_rate_limit_triggered_total{endpoint}</code></li>
+  <li><code>shadowshare_request_duration_seconds{endpoint,method,status}</code> (histogram)</li>
+</ul>
+
+<h3>14.5 Sentry</h3>
+<p>Configured with a <code>before_send</code> hook that drops events containing query strings or fragments. Request body capture is disabled.</p>
+
+<!-- ============================================== -->
+<h2 id="s15"><span class="num">15</span>Configuration & Environment</h2>
+
+<pre><code># Required
+FLASK_ENV=production
+SECRET_KEY=&lt;64-byte hex from `openssl rand -hex 32`&gt;
+DATABASE_URL=postgresql://shadow:&lt;pw&gt;@127.0.0.1:5432/shadowshare
+REDIS_URL=redis://127.0.0.1:6379/0
+DO_SPACES_KEY=&lt;...&gt;
+DO_SPACES_SECRET=&lt;...&gt;
+DO_SPACES_BUCKET=shadowshare-blobs
+DO_SPACES_ENDPOINT=https://nyc3.digitaloceanspaces.com
+ALLOWED_ORIGIN=https://shadowshare.io
+
+# Tunables
+MAX_UPLOAD_BYTES=104857600         # 100 MB
+CHUNK_SIZE_BYTES=5242880           # 5 MB
+DEFAULT_TTL=7d
+ALLOWED_TTLS=1h,24h,7d,30d
+UPLOAD_SESSION_TTL_HOURS=24
+TTL_SWEEP_INTERVAL_HOURS=1
+
+# Optional
+SENTRY_DSN=
+LOG_LEVEL=INFO
+PROMETHEUS_ENABLED=true</code></pre>
+
+<p>Loaded via Pydantic Settings — type-checked at startup; missing required vars cause an immediate fatal abort with a clear message.</p>
+
+<!-- ============================================== -->
+<h2 id="s16"><span class="num">16</span>Deployment Topology</h2>
+
+<h3>16.1 Host</h3>
+<ul>
+  <li>DigitalOcean Droplet, Ubuntu 22.04 LTS, 4 vCPU / 8 GB RAM (v2.0 baseline).</li>
+  <li>UFW firewall: 22, 80, 443 inbound only.</li>
+  <li>SSH: key-only, root disabled, fail2ban on.</li>
+  <li>Automatic security updates: <code>unattended-upgrades</code> enabled.</li>
+</ul>
+
+<h3>16.2 systemd Unit</h3>
+<pre><code># /etc/systemd/system/shadowshare.service
+[Unit]
+Description=ShadowShare API
+After=network.target postgresql.service redis-server.service
+
+[Service]
+User=shadowshare
+Group=shadowshare
+WorkingDirectory=/opt/shadowshare/api
+EnvironmentFile=/etc/shadowshare/env
+ExecStart=/opt/shadowshare/.venv/bin/gunicorn \
+          --workers 4 \
+          --bind 127.0.0.1:8000 \
+          --timeout 120 \
+          --access-logfile - \
+          app:app
+Restart=on-failure
+RestartSec=5
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/log/shadowshare
+CapabilityBoundingSet=
+
+[Install]
+WantedBy=multi-user.target</code></pre>
+
+<h3>16.3 Nginx Snippet</h3>
+<pre><code>server {
+    listen 443 ssl http2;
+    server_name shadowshare.io;
+
+    ssl_certificate     /etc/letsencrypt/live/shadowshare.io/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/shadowshare.io/privkey.pem;
+
+    client_max_body_size 105m;
+
+    # Static React build
+    root /opt/shadowshare/web/dist;
+    index index.html;
+
+    location /api/ {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_request_buffering off;     # critical for chunked uploads
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+    }
+
+    location / {
+        try_files $uri /index.html;
+    }
+}
+
+server { listen 80; server_name shadowshare.io; return 301 https://$host$request_uri; }</code></pre>
+
+<!-- ============================================== -->
+<h2 id="s17"><span class="num">17</span>CI/CD Pipeline</h2>
+
+<h3>17.1 GitHub Actions Workflow</h3>
+<pre><code>.github/workflows/main.yml
+─────────────────────────
+jobs:
+  lint-test:
+    runs-on: ubuntu-22.04
+    services:
+      postgres: postgres:15
+      redis:    redis:7
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5  { python-version: '3.11' }
+      - run: pip install -r requirements-dev.txt
+      - run: ruff check .
+      - run: mypy app
+      - run: pytest --cov=app --cov-fail-under=80
+      - run: pip-audit
+
+  build:
+    needs: lint-test
+    steps:
+      - run: docker build -t shadowshare:${{ github.sha }} .
+      - run: trivy image shadowshare:${{ github.sha }}
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    steps:
+      - name: SSH deploy
+        run: |
+          ssh deploy@$HOST 'cd /opt/shadowshare && \
+            git fetch && git checkout ${{ github.sha }} && \
+            ./scripts/deploy.sh'
+      - name: Smoke
+        run: curl --fail https://shadowshare.io/api/health</code></pre>
+
+<h3>17.2 Deploy Script</h3>
+<pre><code>#!/bin/bash
+set -euo pipefail
+.venv/bin/pip install -r requirements.txt
+.venv/bin/alembic upgrade head
+sudo systemctl reload shadowshare
+sleep 2
+curl --fail http://127.0.0.1:8000/api/health</code></pre>
+
+<!-- ============================================== -->
+<h2 id="s18"><span class="num">18</span>Disaster Recovery & Backups</h2>
+
+<table>
+<thead><tr><th>Asset</th><th>Backup Strategy</th><th>RTO</th><th>RPO</th></tr></thead>
+<tbody>
+<tr><td>PostgreSQL (metadata)</td><td>DO automated daily snapshots + pg_basebackup hourly to encrypted off-droplet storage</td><td>1 hour</td><td>1 hour</td></tr>
+<tr><td>DO Spaces (blobs)</td><td>No backup — blobs are ephemeral by design. Loss is acceptable.</td><td>n/a</td><td>n/a</td></tr>
+<tr><td>Redis (rate-limit counters)</td><td>No backup — losing counters means temporarily relaxed limits; acceptable.</td><td>n/a</td><td>n/a</td></tr>
+<tr><td>Application code</td><td>GitHub origin + signed tags</td><td>10 min</td><td>0</td></tr>
+<tr><td>Secrets (env file)</td><td>Encrypted with <code>age</code>, stored in a separate private repo + sealed envelope offline</td><td>30 min</td><td>0</td></tr>
+</tbody>
+</table>
+
+<div class="callout">
+  <div class="ctitle">Asymmetric DR posture</div>
+  Because all user file data is encrypted by the user and intended to be ephemeral, we choose not to back up blob storage — doing so would create a longer-lived attack surface for ciphertext we have promised to delete. Loss of the blob store inconveniences users (links return 410) but does not violate any guarantee.
+</div>
+
+<!-- ============================================== -->
+<h2 id="s19"><span class="num">19</span>Backend Testing Plan</h2>
+
+<h3>19.1 Unit (pytest)</h3>
+<ul>
+  <li><code>tests/unit/test_tokens.py</code> — token issuance, constant-time verification, malformed token rejection.</li>
+  <li><code>tests/unit/test_validation.py</code> — Pydantic schemas reject malformed bodies.</li>
+  <li><code>tests/unit/test_log_filter.py</code> — fragment stripper covers every URL shape.</li>
+  <li><code>tests/unit/test_rate_limiter.py</code> — limits trip at the right counts.</li>
+</ul>
+
+<h3>19.2 Integration (testcontainers)</h3>
+<p>Real Postgres + LocalStack S3 + Redis spun up per test session.</p>
+<ul>
+  <li>Full upload → file row exists → blob exists → metadata is opaque bytes.</li>
+  <li>Resume: drop chunk 3, status reports missing, re-upload succeeds, complete works.</li>
+  <li>Burn-after-read: 1st download succeeds, row+blob gone, 2nd download → 410.</li>
+  <li>Burn race: two concurrent downloads — exactly one succeeds, other returns 410.</li>
+  <li>Kill switch: wrong token → 403, right token → 204 and row+blob gone.</li>
+  <li>Status: returns correct counts and timestamps; never includes IPs or recipient identifiers.</li>
+  <li>TTL sweep: row past expires_at is removed within 1 hour cycle.</li>
+  <li>Rate limit: 11th upload init in an hour returns 429 with Retry-After.</li>
+  <li>Tampered blob (bit flipped in storage) — backend serves it; the test then verifies frontend rejects.</li>
+</ul>
+
+<h3>19.3 Security Tests</h3>
+<ul>
+  <li>No endpoint returns IPs, user agents, referers, or filenames.</li>
+  <li>CORS preflight from a non-allowed origin is rejected.</li>
+  <li>Body larger than MAX_UPLOAD_BYTES returns 413 from Nginx (not from Flask — caught earlier).</li>
+  <li>SSRF: storage endpoint is the only place that talks to Spaces; no user input flows into URL construction.</li>
+  <li>SQL injection: parameterised queries everywhere; static analysis with bandit.</li>
+</ul>
+
+<h3>19.4 Load (k6)</h3>
+<pre><code>scenarios:
+  steady_state:
+    executor: constant-arrival-rate
+    rate: 50            # 50 req/s
+    duration: 5m
+    preAllocatedVUs: 50
+thresholds:
+  http_req_duration:    ['p(95)&lt;120']    # ms
+  http_req_failed:      ['rate&lt;0.001']</code></pre>
+
+<!-- ============================================== -->
+<h2 id="s20"><span class="num">20</span>Backend Tickets</h2>
+
+<p>Backend-owned tickets with acceptance criteria.</p>
+
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-001</span><span class="ticket-title">Provision DigitalOcean droplet</span></div><div class="ticket-body">Ubuntu 22.04 LTS, key-only SSH, UFW (22/80/443), fail2ban, unattended-upgrades.<br><strong>AC:</strong> <code>nmap</code> shows only 22/80/443; root login refused.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-002</span><span class="ticket-title">Nginx + Gunicorn + systemd</span></div><div class="ticket-body">TLS termination, systemd unit with hardening flags, log rotation.<br><strong>AC:</strong> <code>systemctl status shadowshare</code> healthy; SSL Labs A+.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-003</span><span class="ticket-title">PostgreSQL 15 + initial schema</span></div><div class="ticket-body">Alembic migration 0001 applied.<br><strong>AC:</strong> <code>files</code> + <code>upload_sessions</code> exist; least-priv user works.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-004</span><span class="ticket-title">DO Spaces bucket + TLS certs</span></div><div class="ticket-body">Private bucket, Let's Encrypt + Certbot auto-renew, 35-day safety-net lifecycle.<br><strong>AC:</strong> bucket lists 0 public-read objects; cert auto-renew dry-run passes.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-008</span><span class="ticket-title">Single-shot upload endpoint</span></div><div class="ticket-body">v1.0 baseline; superseded by SS-021 in v2.0 but retained for tests.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-009</span><span class="ticket-title">GET /api/file streaming</span></div><div class="ticket-body">Streams from Spaces; increments counters atomically.<br><strong>AC:</strong> p95 latency ≤ 120 ms; aborted streams do NOT increment.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-010</span><span class="ticket-title">Hourly TTL sweep</span></div><div class="ticket-body">APScheduler + advisory lock.<br><strong>AC:</strong> single-worker execution proven; sweep deletes both row and blob.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-014</span><span class="ticket-title">Rate limiting + size enforcement</span></div><div class="ticket-body">Flask-Limiter + Nginx body cap.<br><strong>AC:</strong> 11th upload init in an hour → 429 with Retry-After.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-015</span><span class="ticket-title">Security headers + CORS</span></div><div class="ticket-body">All headers from §13.<br><strong>AC:</strong> securityheaders.com grade A+; preflight from disallowed origin returns 403.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-019</span><span class="ticket-title">Burn-after-read</span><span class="badge new">v2.0</span></div><div class="ticket-body">F1. Atomic delete on stream completion; race-safe.<br><strong>AC:</strong> two concurrent reads → exactly one 200, one 410.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-020-BE</span><span class="ticket-title">TTL validation</span><span class="badge new">v2.0</span></div><div class="ticket-body">F2. Reject TTLs not in ALLOWED_TTLS.<br><strong>AC:</strong> bad ttl → 422.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-021</span><span class="ticket-title">Chunked upload pipeline</span><span class="badge new">v2.0</span></div><div class="ticket-body">F10. init / chunk / status / complete; resumable.<br><strong>AC:</strong> 100 MB upload with mid-flight kill of chunk 7 reassembles correctly.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-022</span><span class="ticket-title">Delete token issuance + verification</span><span class="badge new">v2.0</span></div><div class="ticket-body">F3. 256-bit, base64url; SHA-256 hash stored; constant-time compare.<br><strong>AC:</strong> wrong token → 403; right token → 204; row + blob gone.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-023-BE</span><span class="ticket-title">GET /api/status endpoint</span><span class="badge new">v2.0</span></div><div class="ticket-body">F4. Token-gated; returns ONLY non-PII fields.<br><strong>AC:</strong> response schema matches §5.8 exactly; no IP appears in any field.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-024-BE</span><span class="ticket-title">Access verifier storage</span><span class="badge new">v2.0</span></div><div class="ticket-body">F5. Persist <code>access_verifier</code>, <code>access_verifier_salt</code>, <code>access_verifier_iv</code> as opaque bytes; expose flag in meta.<br><strong>AC:</strong> server has no code path that decrypts the verifier.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-032</span><span class="ticket-title">Redis rate limiter</span><span class="badge new">v2.0</span></div><div class="ticket-body">Switch Flask-Limiter storage from memory to Redis; counters survive worker restart.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-033-BE</span><span class="ticket-title">Encrypted metadata persistence</span><span class="badge new">v2.0</span></div><div class="ticket-body">Store <code>encrypted_metadata</code> bytes; reject any plaintext filename if client mistakenly sends one.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-038-BE</span><span class="ticket-title">k6 load profile in CI</span><span class="badge new">v2.0</span></div><div class="ticket-body">50 RPS for 5 minutes; p95 budget enforced.<br><strong>AC:</strong> CI fails if p95 exceeds 120 ms.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-039-BE</span><span class="ticket-title">Structured logging + Sentry scrubbing</span><span class="badge new">v2.0</span></div><div class="ticket-body">structlog JSON; <code>FragmentStripperFilter</code>; Sentry <code>before_send</code> drops query strings.<br><strong>AC:</strong> manual review of one hour of production logs shows no fragment, body, or filename.</div></div>
+
+<div class="doc-footer">
+  <span>ShadowShare v2.0 — Backend Specification</span>
+  <span>Confidential · Engineering · 2026</span>
+</div>
+
+</div>
+</body>
+</html>

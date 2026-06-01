@@ -1,0 +1,55 @@
+
+  <!DOCTYPE html>
+  <html lang="en">
+    <head>
+      
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Design ShadowShare UI</title>
+      <meta name="description" content="Securely share files with end-to-end zero-knowledge encryption ensuring privacy and control through password protection, expiry, and burn-after-read options." />
+      <meta name="robots" content="noindex, nofollow" />
+      <style>
+        html, body { height: 100%; margin: 0; background: #0a0c12; }
+        #root { height: 100%; }
+        #shadowshare-bootstrap {
+          position: fixed;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: radial-gradient(circle at center, rgba(28, 32, 48, 0.4) 0%, rgba(10, 12, 18, 1) 100%);
+          color: #e7eaf4;
+          font-family: Inter, system-ui, sans-serif;
+          z-index: 9999;
+        }
+        #shadowshare-bootstrap[data-hidden="true"] { display: none; }
+        #shadowshare-bootstrap .panel {
+          padding: 24px 28px;
+          border-radius: 20px;
+          background: rgba(18, 21, 31, 0.92);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+          text-align: center;
+          max-width: 360px;
+          line-height: 1.5;
+        }
+        #shadowshare-bootstrap .title { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+        #shadowshare-bootstrap .body { font-size: 13px; color: rgba(231, 234, 244, 0.72); }
+      </style>
+      
+    </head>
+
+    <body>
+      <div id="shadowshare-bootstrap">
+        <div class="panel">
+          <div class="title">Loading ShadowShare…</div>
+          <div class="body">If the app stalls, refresh the page or check the console for errors.</div>
+        </div>
+      </div>
+      
+      <div id="root"></div>
+      <script type="module" src="/src/main.tsx"></script>
+      
+    </body>
+  </html>
+  

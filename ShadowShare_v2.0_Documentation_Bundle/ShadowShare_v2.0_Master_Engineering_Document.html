@@ -1,0 +1,997 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ShadowShare v2.0 — Master Engineering Document</title>
+<style>
+/* ShadowShare Document Theme — shared across all 3 docs */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root{
+  --bg:#0A0C12; --surface:#12151F; --elevated:#1C2030; --border:#252A3A;
+  --brand:#7C6EFA; --brand-hover:#9B8FFB; --brand-dim:#2A2560;
+  --text:#EEF0F6; --text-2:#8B92A8; --text-3:#525869;
+  --success:#27D585; --warning:#F5A623; --danger:#EF5350;
+  --mono:'JetBrains Mono', ui-monospace, Menlo, monospace;
+  --sans:'Inter', -apple-system, system-ui, sans-serif;
+}
+
+@media print {
+  :root{
+    --bg:#ffffff; --surface:#ffffff; --elevated:#F7F8FA; --border:#E2E5EE;
+    --text:#0A0C12; --text-2:#3C4255; --text-3:#6B7185;
+    --brand-dim:#EEEBFF;
+  }
+  body{background:#fff !important; color:#0A0C12 !important;}
+  .no-print{display:none !important;}
+  .page-break{page-break-before:always;}
+  h1,h2,h3,h4{break-after:avoid;}
+  pre,table,figure{break-inside:avoid;}
+  a{color:#4E3FCE; text-decoration:none;}
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:var(--sans);
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.65;
+  font-size:14.5px;
+  -webkit-font-smoothing:antialiased;
+}
+
+.doc{max-width:880px; margin:0 auto; padding:60px 56px;}
+
+/* Cover page */
+.cover{
+  min-height:92vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:80px 56px;
+  border-bottom:1px solid var(--border);
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(124,110,250,0.08), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 50% 100%, rgba(39,213,133,0.04), transparent 70%);
+}
+.cover .eyebrow{
+  font-size:12px; letter-spacing:0.18em; text-transform:uppercase;
+  color:var(--brand-hover); font-weight:600; margin-bottom:24px;
+}
+.cover h1{
+  font-size:56px; font-weight:600; line-height:1.05;
+  margin:0 0 18px 0; letter-spacing:-0.02em;
+}
+.cover h1 .accent{color:var(--brand);}
+.cover .tagline{
+  font-size:20px; color:var(--text-2); font-weight:400;
+  max-width:560px; margin:0 0 48px 0;
+}
+.cover .meta-grid{
+  display:grid;
+  grid-template-columns:repeat(2, 1fr);
+  gap:0;
+  border:1px solid var(--border);
+  border-radius:10px;
+  overflow:hidden;
+  max-width:640px;
+  margin-top:32px;
+}
+.cover .meta-cell{
+  padding:18px 22px;
+  border-right:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+}
+.cover .meta-cell:nth-child(2n){border-right:none;}
+.cover .meta-cell:nth-last-child(-n+2){border-bottom:none;}
+.cover .meta-label{font-size:11px; color:var(--text-3); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:6px;}
+.cover .meta-value{font-size:15px; font-weight:500; color:var(--text);}
+
+.logo-mark{
+  display:inline-flex; align-items:center; gap:10px;
+  font-weight:600; font-size:18px;
+}
+.logo-mark svg{flex-shrink:0;}
+
+/* Headings */
+h1, h2, h3, h4, h5{font-family:var(--sans); color:var(--text); font-weight:600;}
+h2{
+  font-size:30px; margin-top:64px; margin-bottom:16px;
+  padding-bottom:12px; border-bottom:1px solid var(--border);
+  letter-spacing:-0.01em;
+}
+h2 .num{color:var(--brand); font-weight:500; margin-right:14px;}
+h3{font-size:21px; margin-top:42px; margin-bottom:12px; letter-spacing:-0.005em;}
+h4{font-size:16px; margin-top:28px; margin-bottom:8px; color:var(--text);}
+h5{font-size:13px; margin:18px 0 6px 0; color:var(--text-2); text-transform:uppercase; letter-spacing:0.08em;}
+
+p{margin:10px 0 14px 0; color:var(--text);}
+strong{color:var(--text); font-weight:600;}
+em{color:var(--text-2);}
+
+/* Links */
+a{color:var(--brand-hover); text-decoration:none; border-bottom:1px solid transparent;}
+a:hover{border-bottom-color:var(--brand-hover);}
+
+/* Code */
+code{
+  font-family:var(--mono); font-size:0.88em;
+  background:var(--elevated); color:var(--brand-hover);
+  padding:1.5px 6px; border-radius:4px; border:1px solid var(--border);
+}
+pre{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:18px 20px;
+  overflow-x:auto;
+  font-family:var(--mono);
+  font-size:12.5px;
+  line-height:1.6;
+  color:var(--text);
+}
+pre code{background:none; border:none; padding:0; color:inherit;}
+
+/* Tables */
+table{
+  width:100%; border-collapse:collapse; margin:18px 0 22px 0;
+  font-size:13.5px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  overflow:hidden;
+}
+thead{background:var(--elevated);}
+th{
+  text-align:left; padding:12px 16px; font-weight:600;
+  font-size:12px; text-transform:uppercase; letter-spacing:0.06em;
+  color:var(--text-2); border-bottom:1px solid var(--border);
+}
+td{padding:11px 16px; border-bottom:1px solid var(--border); color:var(--text); vertical-align:top;}
+tr:last-child td{border-bottom:none;}
+tr:nth-child(even) td{background:rgba(28,32,48,0.35);}
+@media print{tr:nth-child(even) td{background:#FAFBFD;}}
+
+/* Lists */
+ul, ol{padding-left:22px; margin:10px 0 16px 0;}
+li{margin:5px 0; color:var(--text);}
+li::marker{color:var(--brand);}
+
+/* Callouts */
+.callout{
+  margin:20px 0;
+  padding:16px 20px;
+  border-radius:8px;
+  border-left:3px solid var(--brand);
+  background:rgba(124,110,250,0.06);
+  font-size:13.5px;
+  color:var(--text);
+}
+.callout.warn{border-left-color:var(--warning); background:rgba(245,166,35,0.06);}
+.callout.danger{border-left-color:var(--danger); background:rgba(239,83,80,0.06);}
+.callout.success{border-left-color:var(--success); background:rgba(39,213,133,0.06);}
+.callout .ctitle{font-weight:600; margin-bottom:4px; font-size:13px; text-transform:uppercase; letter-spacing:0.06em;}
+.callout.warn .ctitle{color:var(--warning);}
+.callout.danger .ctitle{color:var(--danger);}
+.callout.success .ctitle{color:var(--success);}
+.callout .ctitle{color:var(--brand-hover);}
+
+/* Badges */
+.badge{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:3px 10px; font-size:11.5px; font-weight:500;
+  border-radius:9999px;
+  border:1px solid var(--border);
+  background:var(--elevated); color:var(--text-2);
+  letter-spacing:0.02em;
+}
+.badge.brand{background:var(--brand-dim); border-color:rgba(124,110,250,0.4); color:var(--brand-hover);}
+.badge.success{background:rgba(39,213,133,0.1); border-color:rgba(39,213,133,0.3); color:var(--success);}
+.badge.warn{background:rgba(245,166,35,0.1); border-color:rgba(245,166,35,0.3); color:var(--warning);}
+.badge.danger{background:rgba(239,83,80,0.1); border-color:rgba(239,83,80,0.3); color:var(--danger);}
+.badge.new{background:rgba(124,110,250,0.18); border-color:rgba(124,110,250,0.5); color:var(--brand-hover);}
+
+/* TOC */
+.toc{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:24px 28px;
+  margin:32px 0 0 0;
+}
+.toc h3{margin-top:0; font-size:14px; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-2);}
+.toc ol{list-style:none; padding-left:0; counter-reset:toc;}
+.toc ol li{counter-increment:toc; padding:5px 0; border-bottom:1px dashed var(--border); display:flex; justify-content:space-between; font-size:13.5px;}
+.toc ol li:last-child{border-bottom:none;}
+.toc ol li::before{content:counter(toc, decimal) ". "; color:var(--brand); font-weight:500; margin-right:10px;}
+.toc a{flex:1; color:var(--text);}
+.toc .pgnum{color:var(--text-3); font-family:var(--mono); font-size:12px;}
+
+/* Feature cards */
+.feature-grid{
+  display:grid;
+  grid-template-columns:repeat(2, 1fr);
+  gap:14px;
+  margin:18px 0 24px 0;
+}
+.feat{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:18px 20px;
+}
+.feat .ftitle{
+  display:flex; align-items:center; justify-content:space-between;
+  font-weight:600; font-size:14.5px; margin-bottom:8px; color:var(--text);
+}
+.feat .fdesc{font-size:13px; color:var(--text-2); line-height:1.55;}
+
+/* HTTP method tags */
+.http{
+  display:inline-block; font-family:var(--mono); font-size:11px;
+  font-weight:600; padding:3px 8px; border-radius:4px;
+  letter-spacing:0.04em; margin-right:8px;
+}
+.http.get{background:rgba(39,213,133,0.15); color:var(--success); border:1px solid rgba(39,213,133,0.3);}
+.http.post{background:rgba(124,110,250,0.15); color:var(--brand-hover); border:1px solid rgba(124,110,250,0.3);}
+.http.delete{background:rgba(239,83,80,0.15); color:var(--danger); border:1px solid rgba(239,83,80,0.3);}
+.http.put{background:rgba(245,166,35,0.15); color:var(--warning); border:1px solid rgba(245,166,35,0.3);}
+
+.endpoint{
+  background:var(--elevated);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:14px 18px;
+  margin:14px 0;
+  font-family:var(--mono);
+  font-size:13px;
+}
+
+/* Page footer */
+.doc-footer{
+  margin-top:80px; padding-top:24px;
+  border-top:1px solid var(--border);
+  display:flex; justify-content:space-between;
+  font-size:12px; color:var(--text-3);
+}
+
+/* Two-column flex */
+.row2{display:grid; grid-template-columns:1fr 1fr; gap:18px; margin:14px 0;}
+
+/* KV list */
+.kv{display:grid; grid-template-columns:200px 1fr; gap:8px 18px; margin:14px 0; font-size:13.5px;}
+.kv dt{color:var(--text-2); font-weight:500;}
+.kv dd{margin:0; color:var(--text); font-family:var(--mono); font-size:12.5px;}
+
+hr{border:none; border-top:1px solid var(--border); margin:36px 0;}
+
+/* Diagram boxes (ascii-art friendly) */
+.diagram{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:20px;
+  font-family:var(--mono);
+  font-size:12px;
+  line-height:1.5;
+  white-space:pre;
+  overflow-x:auto;
+  color:var(--text-2);
+}
+
+/* Ticket cards */
+.ticket{
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:16px 20px;
+  margin:14px 0;
+  background:var(--surface);
+}
+.ticket-head{
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:8px; flex-wrap:wrap; gap:8px;
+}
+.ticket-id{font-family:var(--mono); font-weight:600; color:var(--brand-hover); font-size:13px;}
+.ticket-title{font-weight:600; font-size:15px; flex:1;}
+.ticket-body{font-size:13px; color:var(--text-2); margin-top:6px;}
+.ticket-meta{font-size:11.5px; color:var(--text-3); margin-top:8px; display:flex; gap:14px;}
+
+</style>
+</head>
+<body>
+
+<!-- ============ COVER ============ -->
+<section class="cover">
+  <div class="logo-mark">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M8 12V9a6 6 0 0 1 11.5-2.4" stroke="#7C6EFA" stroke-width="2" stroke-linecap="round"/>
+      <rect x="5" y="12" width="18" height="13" rx="2.5" stroke="#7C6EFA" stroke-width="2"/>
+      <path d="M14 17v3" stroke="#7C6EFA" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    ShadowShare
+  </div>
+
+  <div class="eyebrow" style="margin-top:48px;">Master Engineering Document · v2.0</div>
+  <h1>Send files.<br><span class="accent">No trace.</span></h1>
+  <p class="tagline">A zero-knowledge, client-encrypted file transfer platform engineered to leave no readable artifact on any server, ever.</p>
+
+  <div class="meta-grid">
+    <div class="meta-cell"><div class="meta-label">Project</div><div class="meta-value">ShadowShare</div></div>
+    <div class="meta-cell"><div class="meta-label">Version</div><div class="meta-value">2.0.0</div></div>
+    <div class="meta-cell"><div class="meta-label">Document Type</div><div class="meta-value">Master Engineering Spec</div></div>
+    <div class="meta-cell"><div class="meta-label">Status</div><div class="meta-value">Production Specification</div></div>
+    <div class="meta-cell"><div class="meta-label">Server</div><div class="meta-value">DigitalOcean · Ubuntu 22.04 LTS</div></div>
+    <div class="meta-cell"><div class="meta-label">License</div><div class="meta-value">MIT (Open Source)</div></div>
+  </div>
+
+  <div style="margin-top:40px; display:flex; gap:8px; flex-wrap:wrap;">
+    <span class="badge brand">Zero-Knowledge</span>
+    <span class="badge brand">AES-256-GCM</span>
+    <span class="badge brand">Client-Side Only</span>
+    <span class="badge brand">Auditable</span>
+    <span class="badge new">13 New Features in v2.0</span>
+  </div>
+</section>
+
+<!-- ============ MAIN DOC ============ -->
+<div class="doc">
+
+<!-- TOC -->
+<div class="toc">
+  <h3>Table of Contents</h3>
+  <ol>
+    <li><a href="#s1">Project Overview</a><span class="pgnum">§1</span></li>
+    <li><a href="#s2">What's New in v2.0</a><span class="pgnum">§2</span></li>
+    <li><a href="#s3">Core Principles & Threat Model</a><span class="pgnum">§3</span></li>
+    <li><a href="#s4">System Architecture</a><span class="pgnum">§4</span></li>
+    <li><a href="#s5">Technology Stack</a><span class="pgnum">§5</span></li>
+    <li><a href="#s6">Feature Specifications (13 New Features)</a><span class="pgnum">§6</span></li>
+    <li><a href="#s7">Cryptographic Design</a><span class="pgnum">§7</span></li>
+    <li><a href="#s8">REST API Surface</a><span class="pgnum">§8</span></li>
+    <li><a href="#s9">Database Schema</a><span class="pgnum">§9</span></li>
+    <li><a href="#s10">User Flows</a><span class="pgnum">§10</span></li>
+    <li><a href="#s11">Non-Functional Requirements</a><span class="pgnum">§11</span></li>
+    <li><a href="#s12">Security Hardening Checklist</a><span class="pgnum">§12</span></li>
+    <li><a href="#s13">Deployment & Infrastructure</a><span class="pgnum">§13</span></li>
+    <li><a href="#s14">Testing Strategy</a><span class="pgnum">§14</span></li>
+    <li><a href="#s15">Development Tickets</a><span class="pgnum">§15</span></li>
+    <li><a href="#s16">Sprint Plan</a><span class="pgnum">§16</span></li>
+    <li><a href="#s17">Risk Register</a><span class="pgnum">§17</span></li>
+    <li><a href="#s18">Glossary</a><span class="pgnum">§18</span></li>
+  </ol>
+</div>
+
+<!-- ============================================== -->
+<h2 id="s1"><span class="num">01</span>Project Overview</h2>
+
+<p><strong>ShadowShare</strong> is a privacy-first, zero-knowledge file transfer platform. Every byte of user data is encrypted inside the sender's browser using the native Web Crypto API <em>before</em> a single network packet leaves the device. The server is engineered to be a <strong>blind vault</strong> — it stores opaque binary blobs, never knows file names, content, passwords, or decryption keys, and is structurally incapable of recovering them.</p>
+
+<p>Even a complete compromise of the server, its database, and its object storage yields <em>no</em> readable user data. The decryption key never traverses any network the operator controls; it is carried only by the URL fragment (the portion after <code>#</code>), which browsers do not transmit to servers per RFC&nbsp;3986.</p>
+
+<p>Version 2.0 (this document) extends the original v1.0 cryptographic foundation with thirteen production-grade product features that move ShadowShare from a competent technical proof-of-concept to a finished, defensible privacy product fit for daily use.</p>
+
+<div class="callout success">
+  <div class="ctitle">Mission Statement</div>
+  ShadowShare exists so that two people can transfer a file across the open internet without trusting a third party — including the operators of ShadowShare itself.
+</div>
+
+<!-- ============================================== -->
+<h2 id="s2"><span class="num">02</span>What's New in v2.0</h2>
+
+<p>Version 2.0 introduces thirteen significant feature additions and a complete UX redesign. These features were selected for three reasons: each (a) closes a real-world threat surface, (b) preserves the zero-knowledge invariant, and (c) materially differentiates ShadowShare from the lineup of "encrypted file share" tools that lack mature sender control.</p>
+
+<div class="feature-grid">
+  <div class="feat"><div class="ftitle">F1 · Burn-After-Reading <span class="badge new">NEW</span></div><div class="fdesc">Sender marks a file as single-use. Server deletes the blob atomically on first successful download.</div></div>
+  <div class="feat"><div class="ftitle">F2 · Custom TTL <span class="badge new">NEW</span></div><div class="fdesc">Choice of 1h / 24h / 7d / 30d expiry, with a live countdown timer on the viewer page.</div></div>
+  <div class="feat"><div class="ftitle">F3 · Sender Kill Switch <span class="badge new">NEW</span></div><div class="fdesc">Private delete-token URL returned at upload time lets the sender revoke a file at any moment.</div></div>
+  <div class="feat"><div class="ftitle">F4 · Download-Count Status <span class="badge new">NEW</span></div><div class="fdesc">Sender-only status page (gated by delete-token) shows download count, first access, time left.</div></div>
+  <div class="feat"><div class="ftitle">F5 · Access Password <span class="badge new">NEW</span></div><div class="fdesc">Optional second-factor password verified client-side via authenticated decryption of a token.</div></div>
+  <div class="feat"><div class="ftitle">F6 · Link-Only Mode <span class="badge new">NEW</span></div><div class="fdesc">"Link is the key" — generate a strong random key, embed in fragment, skip the password prompt.</div></div>
+  <div class="feat"><div class="ftitle">F7 · Multi-File / Folder Upload <span class="badge new">NEW</span></div><div class="fdesc">Client-side ZIP bundling via JSZip before encryption. Server still sees one opaque blob.</div></div>
+  <div class="feat"><div class="ftitle">F8 · Client-Side Preview <span class="badge new">NEW</span></div><div class="fdesc">In-memory image / PDF preview from decrypted bytes — nothing is written to disk.</div></div>
+  <div class="feat"><div class="ftitle">F9 · QR Code Share <span class="badge new">NEW</span></div><div class="fdesc">Inline QR rendering for the full share URL (including fragment) for mobile-to-mobile handoff.</div></div>
+  <div class="feat"><div class="ftitle">F10 · Chunked Resumable Upload <span class="badge new">NEW</span></div><div class="fdesc">5 MB chunks, indexed, server-side reassembly. Recovery from connection loss without restart.</div></div>
+  <div class="feat"><div class="ftitle">F11 · "How It Works" Explainer <span class="badge new">NEW</span></div><div class="fdesc">Interactive animated modal showing the crypto flow for non-technical recipients.</div></div>
+  <div class="feat"><div class="ftitle">F12 · Theme System <span class="badge new">NEW</span></div><div class="fdesc">Dark / light / system preference with <code>prefers-color-scheme</code> support and localStorage persistence.</div></div>
+  <div class="feat"><div class="ftitle">F13 · Security Audit Artefact <span class="badge new">NEW</span></div><div class="fdesc">SECURITY.md, entropy analysis, OWASP checklist, SSL Labs report — shipped with the repository.</div></div>
+</div>
+
+<div class="callout">
+  <div class="ctitle">Zero-Knowledge Invariant — preserved across every new feature</div>
+  Every feature above was reviewed against the rule: <em>the server must remain unable to recover any plaintext, key, password, or filename</em>. Where a feature requires the sender to retain capability over a file (kill switch, status), that capability is rooted in a server-generated token returned only to the sender, never reconstructable by anyone else — including server operators.
+</div>
+
+<!-- ============================================== -->
+<h2 id="s3"><span class="num">03</span>Core Principles & Threat Model</h2>
+
+<h3>3.1 Core Principles</h3>
+<ol>
+  <li><strong>Zero-Knowledge</strong> — server cannot decrypt any user file under any circumstance.</li>
+  <li><strong>Client-Side Encryption</strong> — AES-256-GCM via the Web Crypto API, before upload.</li>
+  <li><strong>Key Sharing via URL Fragment</strong> — the <code>#</code> portion of the URL is never transmitted to the server.</li>
+  <li><strong>No Authentication</strong> — possession of the link (and optionally a password) is the only credential.</li>
+  <li><strong>Ephemeral Storage</strong> — every file has an upper-bound TTL; burn-after-reading is the minimum.</li>
+  <li><strong>Sender Sovereignty</strong> — the sender retains a delete-token and can revoke at any time.</li>
+  <li><strong>Open Crypto Standards</strong> — AES-256-GCM (NIST SP 800-38D), PBKDF2 (NIST SP 800-132), HKDF (RFC 5869), SHA-256.</li>
+  <li><strong>Auditable & Open Source</strong> — full source published under MIT; reproducible builds.</li>
+</ol>
+
+<h3>3.2 Threat Model</h3>
+
+<table>
+<thead><tr><th>Adversary</th><th>Capability</th><th>Mitigation</th></tr></thead>
+<tbody>
+<tr><td>Passive network observer (ISP, public Wi-Fi)</td><td>Inspect traffic in transit</td><td>TLS 1.3 + plaintext never leaves the browser. URL fragment never on the wire.</td></tr>
+<tr><td>Active MITM with valid CA cert</td><td>Decrypt TLS, modify bytes</td><td>AEAD authentication tag on the blob fails verification — viewer surfaces tamper error.</td></tr>
+<tr><td>Compromised server / rogue admin</td><td>Full filesystem and DB read</td><td>Database holds only UUID + opaque ciphertext. No keys, names, or passwords stored.</td></tr>
+<tr><td>Hosting provider / law enforcement subpoena</td><td>Compelled disclosure of data at rest</td><td>Operator cannot disclose what they cannot read. Disclosure yields ciphertext only.</td></tr>
+<tr><td>Link recipient with unauthorized intent</td><td>Re-share the link</td><td>Burn-after-read (F1), access password (F5), kill switch (F3), TTL (F2), status visibility (F4).</td></tr>
+<tr><td>Forwarded / screenshotted share link</td><td>Replay the URL</td><td>Access password (F5), burn-after-read (F1), sender revocation (F3).</td></tr>
+<tr><td>Brute-force on weak password</td><td>Offline grinding the URL</td><td>PBKDF2 100k iterations; recommend high-entropy passwords; access password adds second factor.</td></tr>
+<tr><td>XSS / supply-chain attack on the frontend</td><td>Inject code that exfiltrates plaintext</td><td>Strict CSP, SRI on all assets, no third-party JS in critical path, reproducible builds.</td></tr>
+<tr><td>Browser memory scrape</td><td>Read plaintext while in memory</td><td>Out of scope — physical access to the user's device is a precondition we cannot defend against, and is documented in the threat model.</td></tr>
+</tbody>
+</table>
+
+<h3>3.3 Explicit Non-Goals</h3>
+<ul>
+  <li><strong>Identity, accounts, social graph.</strong> ShadowShare deliberately has no user accounts. Anonymity is a feature.</li>
+  <li><strong>Persistent storage.</strong> Maximum TTL is 30 days. Not a backup product.</li>
+  <li><strong>Defense against an attacker with physical access to a logged-in browser.</strong> Out of scope.</li>
+  <li><strong>Forward secrecy across multiple recipients.</strong> A single share link is a single recipient channel; resharing the link reshares the key.</li>
+</ul>
+
+<!-- ============================================== -->
+<h2 id="s4"><span class="num">04</span>System Architecture</h2>
+
+<p>ShadowShare uses a <strong>two-zone trust model</strong>. Everything inside the browser is the <em>trusted zone</em>; everything beyond the browser is <em>untrusted</em>. Cryptographic boundaries are aligned exactly with this division.</p>
+
+<div class="diagram">┌──────────────────────────────── TRUSTED ZONE (BROWSER) ────────────────────────────────┐
+│                                                                                        │
+│   ┌──────────┐    ┌─────────────┐    ┌──────────────┐    ┌──────────────┐              │
+│   │ File(s)  │───▶│ JSZip       │───▶│ PBKDF2 /     │───▶│ AES-256-GCM  │── ciphertext─┼──┐
+│   │ Selected │    │ (multi/zip) │    │ random key   │    │ Encrypt      │              │  │
+│   └──────────┘    └─────────────┘    └──────────────┘    └──────────────┘              │  │
+│                                                                                        │  │
+│   Key + salt stay in URL fragment  ◀── never transmitted ───────────────────────────── │  │
+└────────────────────────────────────────────────────────────────────────────────────────┘  │
+                                                                                            │
+                                            ┌───────────────────────────────────────────────┘
+                                            │ HTTPS / TLS 1.3
+                                            ▼
+┌────────────────────────────── UNTRUSTED ZONE (DIGITALOCEAN) ──────────────────────────────┐
+│   ┌─────────┐   ┌─────────────┐   ┌──────────────┐   ┌────────────────┐   ┌────────────┐  │
+│   │ Nginx   │──▶│ Gunicorn /  │──▶│ Flask API    │──▶│ PostgreSQL 15  │   │ DO Spaces  │  │
+│   │ TLS, RL │   │ 4 workers   │   │ (Python 3.11)│   │ metadata only  │   │ (S3)       │  │
+│   └─────────┘   └─────────────┘   └──────────────┘   └────────────────┘   └────────────┘  │
+│                                                          ▲                       ▲        │
+│        ┌─────────────────────────────────────────────────┘                       │        │
+│        │ Stores: file_id, blob_path, expires_at, download_count, delete_hash     │        │
+│        │ Never stores: filename, plaintext, key, password, salt                  │        │
+│        └─────────────────────────────────────────────────────────────────────────┘        │
+└───────────────────────────────────────────────────────────────────────────────────────────┘
+</div>
+
+<h3>4.1 Boundary Contract</h3>
+<p>Crossing the trust boundary is allowed for exactly these payloads, and no others:</p>
+<table>
+<thead><tr><th>Direction</th><th>Payload</th><th>Sensitivity</th></tr></thead>
+<tbody>
+<tr><td>Client → Server</td><td>Ciphertext blob (AES-GCM output, includes IV + auth tag)</td><td>Opaque — server cannot decrypt</td></tr>
+<tr><td>Client → Server</td><td>Encrypted metadata blob (filename, content-type, size) — encrypted with same scheme</td><td>Opaque</td></tr>
+<tr><td>Client → Server</td><td>Settings: TTL, burn_after_read flag, access_password_verifier (ciphertext)</td><td>Public flags + opaque verifier</td></tr>
+<tr><td>Server → Client</td><td><code>file_id</code> (UUIDv4), <code>delete_token</code> (random 256-bit), <code>expires_at</code> (ISO-8601)</td><td>Public — opaque to third parties</td></tr>
+<tr><td>Server → Client</td><td>Ciphertext blob, content-length header</td><td>Opaque</td></tr>
+</tbody>
+</table>
+
+<!-- ============================================== -->
+<h2 id="s5"><span class="num">05</span>Technology Stack</h2>
+
+<table>
+<thead><tr><th>Layer</th><th>Technology</th><th>Version</th><th>Rationale</th></tr></thead>
+<tbody>
+<tr><td>Frontend Framework</td><td>React + Vite</td><td>React 18.3 · Vite 5.x</td><td>Mature, well-audited, fast HMR for crypto development</td></tr>
+<tr><td>Language</td><td>TypeScript</td><td>5.4+</td><td>Type safety on crypto interfaces — eliminates whole classes of bugs</td></tr>
+<tr><td>Styling</td><td>Tailwind CSS</td><td>3.4</td><td>Token-based design system; matches design spec exactly</td></tr>
+<tr><td>Crypto</td><td>Web Crypto API (native)</td><td>browser-native</td><td>NIST-compliant, hardware-accelerated, audited by browser vendors</td></tr>
+<tr><td>Client-side Zip</td><td>JSZip</td><td>3.10</td><td>Pure-JS folder bundling without server involvement</td></tr>
+<tr><td>QR rendering</td><td>qrcode</td><td>1.5</td><td>Pure-client QR generation, no external service</td></tr>
+<tr><td>PDF preview</td><td>PDF.js</td><td>4.x</td><td>Renders PDF from in-memory bytes; no disk write</td></tr>
+<tr><td>Routing</td><td>React Router</td><td>6.22</td><td>SPA routing for upload / viewer / status pages</td></tr>
+<tr><td>State</td><td>Zustand</td><td>4.5</td><td>Minimal, no Redux boilerplate, easy to audit</td></tr>
+<tr><td>Backend Framework</td><td>Flask</td><td>3.0</td><td>Small surface area, easy to audit, no ORM hide-and-seek</td></tr>
+<tr><td>Language</td><td>Python</td><td>3.11+</td><td>Standard library cryptography, mature ecosystem</td></tr>
+<tr><td>WSGI</td><td>Gunicorn</td><td>22.0</td><td>4 workers behind Nginx</td></tr>
+<tr><td>Web Server / TLS</td><td>Nginx</td><td>1.24</td><td>TLS termination, static asset cache, rate limiting</td></tr>
+<tr><td>Database</td><td>PostgreSQL</td><td>15</td><td>Strict typing, TIMESTAMPTZ, mature</td></tr>
+<tr><td>DB Driver</td><td>psycopg</td><td>3.x</td><td>Modern, async-capable</td></tr>
+<tr><td>Object Storage</td><td>DigitalOcean Spaces (S3-compatible)</td><td>—</td><td>Private bucket; only Flask service-account can read</td></tr>
+<tr><td>S3 Client</td><td>boto3</td><td>1.34</td><td>Standard, well-tested</td></tr>
+<tr><td>Rate Limiting</td><td>Flask-Limiter + Redis</td><td>3.5 · Redis 7</td><td>Distributed counters; survives restarts</td></tr>
+<tr><td>Background Jobs</td><td>APScheduler</td><td>3.10</td><td>Hourly TTL sweep; single-binary deploy</td></tr>
+<tr><td>TLS Certs</td><td>Let's Encrypt + Certbot</td><td>—</td><td>Auto-renewing 90-day certs</td></tr>
+<tr><td>CI/CD</td><td>GitHub Actions</td><td>—</td><td>Reproducible build → deploy to droplet on main push</td></tr>
+<tr><td>OS</td><td>Ubuntu LTS</td><td>22.04</td><td>5-year support, well-documented hardening guides</td></tr>
+</tbody>
+</table>
+
+<!-- ============================================== -->
+<h2 id="s6"><span class="num">06</span>Feature Specifications (13 New Features)</h2>
+
+<h3>F1 — Burn-After-Reading (Single-Download Mode)</h3>
+<p><strong>Goal:</strong> Eliminate persistence after first successful download.</p>
+<p><strong>UX:</strong> Sender toggles "Delete after first download" in advanced options. Viewer page displays a prominent amber warning: <em>"This file will be permanently deleted after you download it."</em></p>
+<p><strong>Backend behaviour:</strong> When <code>burn_after_read=true</code> and the first <code>GET /api/file/{id}</code> succeeds (HTTP 200 + last byte streamed), the worker atomically deletes the row from PostgreSQL and the object from Spaces inside a transaction with <code>SELECT … FOR UPDATE</code>. Subsequent requests return HTTP 410 Gone.</p>
+<p><strong>Edge cases:</strong> Network failure mid-stream <em>does not</em> trigger deletion; only a complete 200 response with the final TCP byte acknowledged triggers the delete hook. Implemented via Flask's <code>response.call_on_close()</code>.</p>
+
+<h3>F2 — Custom TTL with Countdown Timer</h3>
+<p><strong>Goal:</strong> Sender controls intentional ephemerality.</p>
+<p><strong>UX:</strong> Segmented control with options <code>1h / 24h / 7d / 30d</code>. Default 7d. Viewer page displays a live countdown ("Expires in 4h 22m") updated client-side every second.</p>
+<p><strong>Backend behaviour:</strong> <code>expires_at = NOW() + interval</code> stored at upload. Hourly cleanup job (APScheduler) deletes <code>WHERE expires_at &lt; NOW()</code> from both database and Spaces.</p>
+
+<h3>F3 — Sender Kill Switch</h3>
+<p><strong>Goal:</strong> Restore sender control after the link is sent.</p>
+<p><strong>Mechanism:</strong> At upload time the server generates a separate random 256-bit <code>delete_token</code>. Only its SHA-256 hash is persisted (<code>delete_token_hash</code>). The plaintext token is returned to the sender exactly once in the upload response and is never reconstructable.</p>
+<p><strong>API:</strong> <code>DELETE /api/file/{file_id}?token={delete_token}</code>. Server hashes the supplied token and compares to <code>delete_token_hash</code>; on match, deletes immediately.</p>
+<p><strong>UX:</strong> Success page displays two artefacts: (1) the share link, (2) a separate "Save your delete link" box clearly labelled "Only you should hold this." Copy buttons for each.</p>
+
+<h3>F4 — Download-Count Visibility for Sender</h3>
+<p><strong>Goal:</strong> Sender can tell whether the recipient has opened the file — without compromising recipient privacy.</p>
+<p><strong>Mechanism:</strong> The same <code>delete_token</code> grants read access to a status endpoint: <code>GET /api/status/{file_id}?token={delete_token}</code>. Returns <code>{ created_at, expires_at, download_count, first_accessed_at, burn_after_read }</code>. <strong>No IP, no user-agent, no geolocation is stored or returned.</strong></p>
+<p><strong>UX:</strong> Status page at <code>/status/{file_id}#{delete_token}</code> with auto-refresh every 30 seconds.</p>
+
+<h3>F5 — Access Password (Second Authentication Layer)</h3>
+<p><strong>Goal:</strong> Even if the share link leaks, the file remains protected.</p>
+<p><strong>Mechanism (client-side only):</strong></p>
+<ol>
+  <li>Sender enters an access password.</li>
+  <li>Client derives <code>K_access</code> from access password via PBKDF2 (separate salt).</li>
+  <li>Client encrypts a known 32-byte verifier token using <code>K_access</code>; uploads the resulting <code>access_verifier</code> with the blob metadata.</li>
+  <li>Recipient is prompted for the access password; the client derives <code>K_access</code> locally and attempts to decrypt the verifier. AEAD authentication failure → "Incorrect password" — server never sees the password attempt.</li>
+</ol>
+<p><strong>Server role:</strong> The server stores <code>access_verifier</code> (opaque ciphertext) and a flag <code>has_access_password</code>. It does <strong>not</strong> verify the password and is structurally incapable of doing so.</p>
+
+<h3>F6 — Link-Only Mode ("Link is the Key")</h3>
+<p><strong>Goal:</strong> Frictionless flow when the sender judges the channel sufficient.</p>
+<p><strong>Mechanism:</strong> Sender selects "Link Only" in the security mode selector. Client generates a random 256-bit AES key via <code>crypto.getRandomValues</code>, encrypts the file with it, embeds the raw key (base64url) in the URL fragment. Recipient opens the link, the page reads the key from <code>location.hash</code>, decrypts, done — no password prompt at all.</p>
+<p><strong>UX clarity:</strong> The mode selector explicitly labels the trade-off: <em>"Link is the key (easier)"</em> vs <em>"Link + password (more secure)"</em>.</p>
+
+<h3>F7 — Multi-File / Folder Upload</h3>
+<p><strong>Goal:</strong> Handle real-world transfers (multiple files, a folder of photos, a project export).</p>
+<p><strong>Mechanism:</strong> The drop zone accepts multiple files and folders (<code>webkitdirectory</code>). The client bundles them into a single ZIP via JSZip <em>in memory</em>, then runs the standard encrypt-and-upload pipeline. The server still sees one opaque blob and has no idea whether the contents are one file or one hundred.</p>
+<p><strong>UX:</strong> Selected files shown as a small list with per-file remove icons; total size shown as the chip.</p>
+
+<h3>F8 — Client-Side File Preview</h3>
+<p><strong>Goal:</strong> Recipient can sanity-check before downloading.</p>
+<p><strong>Mechanism:</strong> After successful decryption, if the decrypted MIME type is <code>image/*</code> or <code>application/pdf</code>, the bytes are rendered:</p>
+<ul>
+  <li>Images: <code>URL.createObjectURL(blob)</code> into an <code>&lt;img&gt;</code> inside a sandboxed container (no <code>script</code> can run on a passive image element).</li>
+  <li>PDF: PDF.js renders page 1 only into a <code>&lt;canvas&gt;</code> from the in-memory <code>Uint8Array</code>.</li>
+</ul>
+<p><strong>Caveat surfaced to the user:</strong> "Preview generated from decrypted data — nothing was saved to disk."</p>
+
+<h3>F9 — QR Code Share</h3>
+<p><strong>Goal:</strong> One-tap handoff to a phone in the same room.</p>
+<p><strong>Mechanism:</strong> Pure-client QR via <code>qrcode</code> npm package. Encodes the entire share URL including the <code>#</code> fragment. Rendered into a 200×200 canvas with brand-coloured modules. Toggleable popover next to the copy button.</p>
+
+<h3>F10 — Chunked Resumable Upload</h3>
+<p><strong>Goal:</strong> Reliability on bad mobile / hotel-Wi-Fi connections.</p>
+<p><strong>Mechanism:</strong>
+<ol>
+  <li><code>POST /api/upload/init</code> with <code>{total_size, total_chunks, settings}</code> returns <code>upload_session_id</code>.</li>
+  <li>Client uploads each 5 MB chunk via <code>PUT /api/upload/chunk/{session_id}/{chunk_index}</code>.</li>
+  <li><code>GET /api/upload/status/{session_id}</code> reports last good chunk; client resumes from <code>chunk_index + 1</code> on reconnect.</li>
+  <li><code>POST /api/upload/complete/{session_id}</code> reassembles, persists to Spaces, returns final <code>file_id</code> + <code>delete_token</code>.</li>
+</ol>
+Chunks are stored in a temporary scratch area inside Spaces and garbage-collected after 24 hours of inactivity.</p>
+
+<h3>F11 — "How It Works" Interactive Explainer</h3>
+<p><strong>Goal:</strong> Earn the trust of non-technical recipients.</p>
+<p><strong>UX:</strong> Modal triggered from the header link. Three vertically-stacked animated stages: (1) browser encrypts file, (2) server stores cipher noise, (3) key travels in the URL fragment. Each stage has a small technical footnote in monospace ("PBKDF2 · 100,000 iterations · SHA-256") for the technical audience.</p>
+
+<h3>F12 — Theme System</h3>
+<p><strong>Goal:</strong> Respect user preference; look correct on any device.</p>
+<p><strong>Mechanism:</strong> Tailwind <code>dark:</code> classes driven by a <code>data-theme</code> attribute on <code>&lt;html&gt;</code>. Initial value read from <code>localStorage.theme</code>; falls back to <code>matchMedia('(prefers-color-scheme: dark)')</code>. Toggle cycles <code>system → dark → light → system</code>.</p>
+
+<h3>F13 — Security Audit Artefact</h3>
+<p><strong>Goal:</strong> Make the security claim falsifiable and reviewable.</p>
+<p><strong>Deliverable:</strong> A <code>SECURITY.md</code> file shipped with the repo containing:</p>
+<ul>
+  <li>Threat model (see §3.2).</li>
+  <li>Cryptographic design decisions with primitive choices and parameters.</li>
+  <li>Entropy measurement: sampled 10,000 keys/IVs, ran NIST SP 800-22 statistical test suite, report results.</li>
+  <li>OWASP ASVS L2 checklist with pass/fail per control.</li>
+  <li>SSL Labs report (target A+) screenshot and re-test link.</li>
+  <li>"Zero-Knowledge compliance" table mapping each invariant to evidence (code paths, test cases).</li>
+</ul>
+
+<!-- ============================================== -->
+<h2 id="s7"><span class="num">07</span>Cryptographic Design</h2>
+
+<h3>7.1 Primitive Choices</h3>
+<table>
+<thead><tr><th>Purpose</th><th>Algorithm</th><th>Parameters</th><th>Standard</th></tr></thead>
+<tbody>
+<tr><td>Symmetric encryption</td><td>AES-256-GCM (AEAD)</td><td>256-bit key, 96-bit IV (random per file), 128-bit auth tag</td><td>NIST SP 800-38D</td></tr>
+<tr><td>Password-based key derivation</td><td>PBKDF2-HMAC-SHA-256</td><td>100,000 iterations, 16-byte random salt, 32-byte output</td><td>NIST SP 800-132</td></tr>
+<tr><td>Random byte generation</td><td><code>crypto.getRandomValues()</code></td><td>CSPRNG provided by the browser / OS</td><td>W3C Web Crypto</td></tr>
+<tr><td>Hashing (delete token storage)</td><td>SHA-256</td><td>—</td><td>FIPS 180-4</td></tr>
+<tr><td>TLS</td><td>TLS 1.3 (1.2 fallback disabled)</td><td>Modern cipher suites only; HSTS preload</td><td>RFC 8446</td></tr>
+</tbody>
+</table>
+
+<h3>7.2 Share URL Format</h3>
+<p>Two share URL formats exist, one per security mode:</p>
+<pre><code>// F5 — Link + Password
+https://shadowshare.io/v/{file_id}#{base64url(salt)}.{flags}
+
+// F6 — Link Only (link is the key)
+https://shadowshare.io/v/{file_id}#k.{base64url(rawKey)}.{flags}
+</code></pre>
+<p>The <code>flags</code> segment (1–2 base64url characters) signals to the viewer whether burn-after-read or access-password modes are active, so the UI can render the correct prompts <em>before</em> a network round-trip.</p>
+
+<h3>7.3 End-to-End Crypto Flow (Upload, F5 mode)</h3>
+<div class="diagram">1. user selects file F, types password P
+2. salt   ← crypto.getRandomValues(16)
+3. key    ← PBKDF2(P, salt, 100000, SHA-256, 32 bytes)
+4. iv     ← crypto.getRandomValues(12)
+5. meta   ← {filename, mime, size} as JSON bytes
+6. ct_m   ← AES-256-GCM(key, iv,  meta)    // encrypted metadata
+7. ct_f   ← AES-256-GCM(key, iv', F)       // encrypted file body, fresh iv'
+8. if access_password: K_a ← PBKDF2(P_access, salt2); verifier ← AES-GCM(K_a, iv_v, TOKEN)
+9. upload { ct_f, ct_m, iv, iv', salt2?, verifier? } to server
+10. server returns { file_id, delete_token, expires_at }
+11. browser renders: https://.../v/{file_id}#base64url(salt).{flags}
+</div>
+
+<h3>7.4 Implementation Rules (non-negotiable)</h3>
+<ul>
+  <li><strong>Never</strong> re-use an IV with the same key. Each new ciphertext gets a fresh 96-bit IV from <code>crypto.getRandomValues</code>.</li>
+  <li><strong>Always</strong> verify the GCM auth tag before exposing decrypted bytes to the UI. Web Crypto does this automatically; do not bypass.</li>
+  <li><strong>Never</strong> serialise the key or password to <code>localStorage</code>, IndexedDB, or cookies — only to URL fragment / in-memory state.</li>
+  <li><strong>Never</strong> include the URL fragment in any analytics, logging, error tracking, or service-worker fetch interceptor.</li>
+  <li><strong>No</strong> third-party crypto libraries. Web Crypto API only.</li>
+</ul>
+
+<!-- ============================================== -->
+<h2 id="s8"><span class="num">08</span>REST API Surface</h2>
+
+<p>Full request/response contracts are in the Backend Specification document. This section is an at-a-glance reference.</p>
+
+<div class="endpoint"><span class="http post">POST</span> /api/upload/init &nbsp;—&nbsp; Open a chunked upload session</div>
+<div class="endpoint"><span class="http put">PUT</span>&nbsp; /api/upload/chunk/{session_id}/{index} &nbsp;—&nbsp; Upload one 5 MB chunk</div>
+<div class="endpoint"><span class="http get">GET</span>&nbsp; /api/upload/status/{session_id} &nbsp;—&nbsp; Last successful chunk index</div>
+<div class="endpoint"><span class="http post">POST</span> /api/upload/complete/{session_id} &nbsp;—&nbsp; Finalise; returns file_id + delete_token</div>
+<div class="endpoint"><span class="http get">GET</span>&nbsp; /api/file/{file_id} &nbsp;—&nbsp; Stream encrypted blob</div>
+<div class="endpoint"><span class="http get">GET</span>&nbsp; /api/file/{file_id}/meta &nbsp;—&nbsp; Encrypted metadata + flags (burn, expires_at, has_password)</div>
+<div class="endpoint"><span class="http delete">DELETE</span> /api/file/{file_id}?token=… &nbsp;—&nbsp; Sender kill switch (F3)</div>
+<div class="endpoint"><span class="http get">GET</span>&nbsp; /api/status/{file_id}?token=… &nbsp;—&nbsp; Sender status (F4)</div>
+<div class="endpoint"><span class="http get">GET</span>&nbsp; /api/health &nbsp;—&nbsp; Liveness probe</div>
+
+<!-- ============================================== -->
+<h2 id="s9"><span class="num">09</span>Database Schema</h2>
+
+<pre><code>CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+CREATE TABLE files (
+    file_id              UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+    blob_path            VARCHAR(500) NOT NULL,            -- Spaces object key
+    blob_size_bytes      BIGINT       NOT NULL,
+    created_at           TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    expires_at           TIMESTAMPTZ  NOT NULL,
+    download_count       INTEGER      NOT NULL DEFAULT 0,
+    first_accessed_at    TIMESTAMPTZ  NULL,
+    burn_after_read      BOOLEAN      NOT NULL DEFAULT FALSE,
+    has_access_password  BOOLEAN      NOT NULL DEFAULT FALSE,
+    access_verifier      BYTEA        NULL,                -- opaque ciphertext (F5)
+    encrypted_metadata   BYTEA        NOT NULL,            -- opaque ciphertext
+    encryption_iv        BYTEA        NOT NULL,            -- 12 bytes
+    delete_token_hash    BYTEA        NOT NULL,            -- SHA-256(delete_token)
+    CHECK (blob_size_bytes &gt; 0 AND blob_size_bytes &lt;= 104857600)
+);
+
+CREATE INDEX idx_files_expires_at ON files (expires_at);
+
+CREATE TABLE upload_sessions (
+    session_id           UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+    total_size_bytes     BIGINT       NOT NULL,
+    total_chunks         INTEGER      NOT NULL,
+    received_chunks      INTEGER[]    NOT NULL DEFAULT '{}',
+    settings             JSONB        NOT NULL,
+    created_at           TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    expires_at           TIMESTAMPTZ  NOT NULL DEFAULT NOW() + INTERVAL '24 hours'
+);
+
+CREATE INDEX idx_upload_sessions_expires ON upload_sessions (expires_at);
+</code></pre>
+
+<div class="callout">
+  <div class="ctitle">What is intentionally absent</div>
+  No columns for: filename, content-type, sender IP, recipient IP, password, password hash, encryption key, salt, user-agent, geolocation, referer. Their absence is the zero-knowledge guarantee.
+</div>
+
+<!-- ============================================== -->
+<h2 id="s10"><span class="num">10</span>User Flows</h2>
+
+<h3>10.1 Sender Flow (happy path)</h3>
+<ol>
+  <li>Open <code>shadowshare.io</code>.</li>
+  <li>Drag & drop one or more files (or a folder).</li>
+  <li>Choose security mode: <em>Link+Password</em> or <em>Link-Only</em>.</li>
+  <li>(Optional) Open advanced options: TTL, burn-after-read, max downloads.</li>
+  <li>Click <strong>Encrypt &amp; Upload</strong>.</li>
+  <li>See progress phases: <em>deriving key → encrypting → uploading</em>.</li>
+  <li>Receive: share link + QR + delete link.</li>
+  <li>Copy share link; send via preferred channel.</li>
+  <li>Optionally bookmark the delete link / status page.</li>
+</ol>
+
+<h3>10.2 Recipient Flow (happy path)</h3>
+<ol>
+  <li>Open the share link.</li>
+  <li>(If F5 mode) Enter access password → client-side verification.</li>
+  <li>(If F5 mode) Enter encryption password.</li>
+  <li>Watch decryption progress (auth-tag verification).</li>
+  <li>See preview if applicable (image / PDF page 1).</li>
+  <li>Click <strong>Download</strong>.</li>
+  <li>(If burn-after-read) See the file vanish — server returns HTTP 410 on retry.</li>
+</ol>
+
+<h3>10.3 Sender Revocation Flow (F3)</h3>
+<ol>
+  <li>Open the delete link.</li>
+  <li>Confirm intent.</li>
+  <li>Backend deletes blob + row; status flips to "Deleted".</li>
+</ol>
+
+<!-- ============================================== -->
+<h2 id="s11"><span class="num">11</span>Non-Functional Requirements</h2>
+
+<table>
+<thead><tr><th>Attribute</th><th>Target</th><th>Measurement</th></tr></thead>
+<tbody>
+<tr><td>Upload throughput</td><td>≥ 50 MB/s on gigabit residential</td><td>Chrome DevTools network sim, baseline 1 Gbps</td></tr>
+<tr><td>Encryption speed</td><td>≥ 200 MB/s in modern Chrome</td><td>Web Crypto benchmark on a 100 MB file</td></tr>
+<tr><td>Time to first interaction</td><td>≤ 1.5 s</td><td>Lighthouse, cold cache, fast 4G profile</td></tr>
+<tr><td>Bundle size (initial JS)</td><td>≤ 180 KB gzipped</td><td>Vite build report</td></tr>
+<tr><td>Backend p95 latency (init/complete)</td><td>≤ 120 ms</td><td>k6 load test, 50 RPS</td></tr>
+<tr><td>Backend uptime</td><td>≥ 99.5% monthly</td><td>UptimeRobot HTTPS probe</td></tr>
+<tr><td>Max file size</td><td>100 MB v1; 1 GB roadmap</td><td>Hard limit in Nginx + Flask + DB CHECK</td></tr>
+<tr><td>TLS grade</td><td>A+ on SSL Labs</td><td>External scan</td></tr>
+<tr><td>Lighthouse accessibility</td><td>≥ 95</td><td>Lighthouse CI</td></tr>
+<tr><td>Test coverage</td><td>≥ 80% backend; ≥ 75% frontend logic</td><td>pytest-cov, vitest --coverage</td></tr>
+</tbody>
+</table>
+
+<!-- ============================================== -->
+<h2 id="s12"><span class="num">12</span>Security Hardening Checklist</h2>
+
+<table>
+<thead><tr><th>#</th><th>Control</th><th>Implementation</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>SSH root login disabled</td><td><code>PermitRootLogin no</code> in <code>sshd_config</code></td></tr>
+<tr><td>2</td><td>Key-only SSH auth</td><td><code>PasswordAuthentication no</code></td></tr>
+<tr><td>3</td><td>UFW firewall active</td><td>Inbound: 22, 80, 443 only</td></tr>
+<tr><td>4</td><td>Fail2ban on SSH + Nginx</td><td>Default + custom <code>nginx-limit-req</code> jail</td></tr>
+<tr><td>5</td><td>HTTPS-only enforced</td><td>Nginx 301 redirect from :80</td></tr>
+<tr><td>6</td><td>HSTS</td><td><code>Strict-Transport-Security: max-age=31536000; includeSubDomains; preload</code></td></tr>
+<tr><td>7</td><td>CSP</td><td>Default-src 'self'; no inline scripts; SRI on all assets</td></tr>
+<tr><td>8</td><td>X-Frame-Options</td><td><code>DENY</code></td></tr>
+<tr><td>9</td><td>Referrer-Policy</td><td><code>no-referrer</code> — protects fragments from leaking</td></tr>
+<tr><td>10</td><td>CORS restricted</td><td><code>Access-Control-Allow-Origin: https://shadowshare.io</code></td></tr>
+<tr><td>11</td><td>Rate limiting (uploads)</td><td>Flask-Limiter: 10 uploads / hour / IP</td></tr>
+<tr><td>12</td><td>Rate limiting (downloads)</td><td>60 / minute / IP</td></tr>
+<tr><td>13</td><td>Body size cap</td><td>Nginx <code>client_max_body_size 105m</code></td></tr>
+<tr><td>14</td><td>No plaintext in logs</td><td>Custom log filter strips URL fragments and bodies</td></tr>
+<tr><td>15</td><td>Least-privilege DB user</td><td>SELECT/INSERT/UPDATE/DELETE on <code>files</code> only</td></tr>
+<tr><td>16</td><td><code>.env</code> excluded from VCS</td><td>Pre-commit hook + <code>.gitignore</code></td></tr>
+<tr><td>17</td><td>Spaces bucket private</td><td>No public-read ACL; signed URLs only for Flask</td></tr>
+<tr><td>18</td><td>Auth-tag verification confirmed</td><td>Integration test for tampered ciphertext</td></tr>
+<tr><td>19</td><td>Fragment not transmitted</td><td>Wireshark/MITM proxy verification — test recorded in audit</td></tr>
+<tr><td>20</td><td>TTL cleanup running</td><td>APScheduler health probe + Sentry alert on failure</td></tr>
+<tr><td>21</td><td>Droplet backups enabled</td><td>Weekly DO snapshot — metadata only; recoverable infra</td></tr>
+<tr><td>22</td><td>Dependency scan</td><td><code>pip-audit</code> + <code>npm audit</code> in CI</td></tr>
+<tr><td>23</td><td>Reproducible builds</td><td>Pinned versions in lockfiles; CI verifies hash</td></tr>
+<tr><td>24</td><td>Audit log (admin only)</td><td>Structured log of admin actions; no user data</td></tr>
+</tbody>
+</table>
+
+<!-- ============================================== -->
+<h2 id="s13"><span class="num">13</span>Deployment & Infrastructure</h2>
+
+<h3>13.1 Topology</h3>
+<div class="diagram">                ┌────────────┐
+                │ Cloudflare │ (DNS + DDoS shield, no plaintext relay)
+                └─────┬──────┘
+                      │ TLS 1.3
+                ┌─────▼──────┐
+                │   Nginx    │  ← TLS termination, rate limit, static assets
+                └─────┬──────┘
+                      │ HTTP loopback
+                ┌─────▼──────────────┐
+                │ Gunicorn × 4       │  ← Flask 3.0 (Python 3.11)
+                └──┬──────────────┬──┘
+                   │              │
+        ┌──────────▼──┐      ┌────▼────────┐
+        │ PostgreSQL  │      │ DO Spaces   │
+        │ (private)   │      │ (S3, priv.) │
+        └─────────────┘      └─────────────┘
+                   │
+              ┌────▼────┐
+              │  Redis  │  ← rate limiter store
+              └─────────┘
+</div>
+
+<h3>13.2 Environment Variables</h3>
+<pre><code>FLASK_ENV=production
+SECRET_KEY=&lt;64-byte hex&gt;
+DATABASE_URL=postgresql://shadow:&lt;pw&gt;@127.0.0.1:5432/shadowshare
+REDIS_URL=redis://127.0.0.1:6379/0
+DO_SPACES_KEY=&lt;...&gt;
+DO_SPACES_SECRET=&lt;...&gt;
+DO_SPACES_BUCKET=shadowshare-blobs
+DO_SPACES_ENDPOINT=https://nyc3.digitaloceanspaces.com
+MAX_UPLOAD_BYTES=104857600
+DEFAULT_TTL_DAYS=7
+ALLOWED_TTLS=1h,24h,7d,30d
+ALLOWED_ORIGIN=https://shadowshare.io
+SENTRY_DSN=&lt;optional&gt;</code></pre>
+
+<h3>13.3 Gunicorn Command</h3>
+<pre><code>gunicorn --workers 4 --bind 127.0.0.1:8000 --timeout 120 --access-logfile - app:app</code></pre>
+
+<h3>13.4 CI/CD Pipeline</h3>
+<ol>
+  <li>Push to <code>main</code> triggers GitHub Actions.</li>
+  <li>Job 1 — <strong>Lint &amp; Test:</strong> ruff, mypy, pytest --cov, vitest, playwright e2e.</li>
+  <li>Job 2 — <strong>Build:</strong> Vite production build; verify bundle size budget; SRI hashes generated.</li>
+  <li>Job 3 — <strong>Security:</strong> pip-audit, npm audit, gitleaks, trivy on container if used.</li>
+  <li>Job 4 — <strong>Deploy:</strong> SSH to droplet via deploy key, rsync, <code>systemctl reload shadowshare</code>, smoke test <code>/api/health</code>, roll back on failure.</li>
+</ol>
+
+<!-- ============================================== -->
+<h2 id="s14"><span class="num">14</span>Testing Strategy</h2>
+
+<h3>14.1 Test Pyramid</h3>
+<table>
+<thead><tr><th>Layer</th><th>Tooling</th><th>Scope</th><th>Coverage Goal</th></tr></thead>
+<tbody>
+<tr><td>Unit (frontend)</td><td>Vitest</td><td>Crypto wrappers, state stores, hooks</td><td>≥ 75%</td></tr>
+<tr><td>Unit (backend)</td><td>pytest</td><td>Routes, validators, S3 client</td><td>≥ 80%</td></tr>
+<tr><td>Integration</td><td>pytest + testcontainers</td><td>Postgres + Spaces (LocalStack) + Flask</td><td>All endpoints</td></tr>
+<tr><td>End-to-End</td><td>Playwright</td><td>Full upload → share → download in real Chromium / Firefox</td><td>10 critical paths</td></tr>
+<tr><td>Crypto fidelity</td><td>Custom</td><td>NIST GCM test vectors, RFC 6070 PBKDF2 vectors</td><td>100% vectors pass</td></tr>
+<tr><td>Tamper resistance</td><td>pytest</td><td>Flip random bits in ciphertext → expect AEAD failure</td><td>1000 fuzz iterations</td></tr>
+<tr><td>Load</td><td>k6</td><td>50 RPS sustained against init/complete</td><td>p95 ≤ 120 ms</td></tr>
+</tbody>
+</table>
+
+<h3>14.2 Critical E2E Scenarios</h3>
+<ol>
+  <li>Upload single file → download in second tab → bytes match.</li>
+  <li>Upload with access password → wrong password → "Incorrect password" → right password → bytes match.</li>
+  <li>Burn-after-read → first download succeeds → second download returns 410.</li>
+  <li>Custom TTL (1h) → file expires → 410 after sweep.</li>
+  <li>Kill switch → delete → 410 on share link.</li>
+  <li>Status page shows download count and first-access time.</li>
+  <li>Multi-file upload → recipient gets a ZIP that contains all originals byte-identical.</li>
+  <li>Resumable upload survives killing chunk #3 mid-flight.</li>
+  <li>Tampered blob → viewer surfaces "Integrity check failed", no download offered.</li>
+  <li>Link with non-existent <code>file_id</code> → "Not found" state.</li>
+</ol>
+
+<!-- ============================================== -->
+<h2 id="s15"><span class="num">15</span>Development Tickets</h2>
+
+<p>The v1.0 ticket set (SS-001 to SS-018) is retained. Twenty-two new tickets are added for v2.0 features and hardening.</p>
+
+<h3>15.1 Retained from v1.0 (SS-001 – SS-018)</h3>
+
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-001</span><span class="ticket-title">Provision DigitalOcean Droplet</span><span class="badge">Infra</span></div><div class="ticket-body">Create production droplet, Ubuntu 22.04, key-only SSH, UFW configured.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-002</span><span class="ticket-title">Install Nginx + Gunicorn</span><span class="badge">Infra</span></div><div class="ticket-body">Reverse proxy, systemd unit for Gunicorn, static serve for React build.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-003</span><span class="ticket-title">PostgreSQL 15 + schema migration</span><span class="badge">Infra</span></div><div class="ticket-body">Create <code>shadowshare</code> DB and user; apply initial schema.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-004</span><span class="ticket-title">DO Spaces bucket + Let's Encrypt TLS</span><span class="badge">Infra</span></div><div class="ticket-body">Private Spaces; Certbot auto-renewal; A+ TLS config.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-005</span><span class="ticket-title">PBKDF2 key derivation (Web Crypto)</span><span class="badge">Crypto</span></div><div class="ticket-body">SHA-256, 100k iterations, 16-byte salt; verified against RFC 6070 vectors.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-006</span><span class="ticket-title">AES-256-GCM encrypt/decrypt (Web Crypto)</span><span class="badge">Crypto</span></div><div class="ticket-body">Fresh IV per ciphertext, auth-tag verification mandatory.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-007</span><span class="ticket-title">URL fragment share link system</span><span class="badge">Crypto</span></div><div class="ticket-body">Key material lives only in <code>location.hash</code>; never sent to server.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-008</span><span class="ticket-title">Upload endpoint (single-shot)</span><span class="badge">Backend</span></div><div class="ticket-body">Multipart blob → Spaces → DB row. <em>Superseded by chunked flow in SS-021.</em></div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-009</span><span class="ticket-title">Retrieval endpoint</span><span class="badge">Backend</span></div><div class="ticket-body">Stream blob from Spaces; increment download_count.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-010</span><span class="ticket-title">TTL cleanup background job</span><span class="badge">Backend</span></div><div class="ticket-body">APScheduler hourly sweep deleting expired DB rows and Spaces objects.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-011</span><span class="ticket-title">React + Vite scaffolding</span><span class="badge">Frontend</span></div><div class="ticket-body">TS strict mode, router for <code>/</code> and <code>/v/:fileId</code>.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-012</span><span class="ticket-title">Upload page</span><span class="badge">Frontend</span></div><div class="ticket-body">Drop zone, password field, progress, success state.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-013</span><span class="ticket-title">Viewer page</span><span class="badge">Frontend</span></div><div class="ticket-body">Reads <code>file_id</code> from path, key from fragment, decrypts and offers download.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-014</span><span class="ticket-title">Rate limiting + file-size enforcement</span><span class="badge">Security</span></div><div class="ticket-body">Flask-Limiter; Nginx body cap; DB CHECK constraint.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-015</span><span class="ticket-title">Security headers + CORS</span><span class="badge">Security</span></div><div class="ticket-body">CSP, HSTS, Referrer-Policy: no-referrer, strict CORS.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-016</span><span class="ticket-title">GitHub Actions CI/CD</span><span class="badge">DevOps</span></div><div class="ticket-body">Lint, test, build, deploy on main push.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-017</span><span class="ticket-title">Comprehensive test suite (≥ 80%)</span><span class="badge">QA</span></div><div class="ticket-body">pytest + vitest + Playwright; crypto vectors.</div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-018</span><span class="ticket-title">Security audit + SECURITY.md</span><span class="badge">Security</span></div><div class="ticket-body">OWASP ASVS L2 walkthrough, entropy analysis, ZK compliance table.</div></div>
+
+<h3>15.2 New for v2.0 (SS-019 – SS-040)</h3>
+
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-019</span><span class="ticket-title">Burn-after-read flow (F1)</span><span class="badge new">v2.0</span><span class="badge">Backend</span></div><div class="ticket-body">DB flag <code>burn_after_read</code>, atomic delete on stream completion, return 410 thereafter.</div><div class="ticket-meta"><span>Depends on: SS-009</span><span>Est: 4h</span></div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-020</span><span class="ticket-title">Custom TTL selection (F2)</span><span class="badge new">v2.0</span><span class="badge">Full-stack</span></div><div class="ticket-body">Segmented control 1h/24h/7d/30d on upload UI; backend validates against <code>ALLOWED_TTLS</code>.</div><div class="ticket-meta"><span>Depends on: SS-008, SS-012</span><span>Est: 3h</span></div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-021</span><span class="ticket-title">Chunked resumable upload (F10)</span><span class="badge new">v2.0</span><span class="badge">Full-stack</span></div><div class="ticket-body">Init/chunk/status/complete endpoints; client retry with backoff; session GC.</div><div class="ticket-meta"><span>Depends on: SS-008</span><span>Est: 12h</span></div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-022</span><span class="ticket-title">Sender kill-switch token (F3)</span><span class="badge new">v2.0</span><span class="badge">Backend</span></div><div class="ticket-body">Generate 256-bit token at upload, persist SHA-256; DELETE endpoint verifies hash.</div><div class="ticket-meta"><span>Depends on: SS-021</span><span>Est: 4h</span></div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-023</span><span class="ticket-title">Status endpoint + page (F4)</span><span class="badge new">v2.0</span><span class="badge">Full-stack</span></div><div class="ticket-body"><code>GET /api/status/{id}?token=</code> + dedicated React route with auto-refresh.</div><div class="ticket-meta"><span>Depends on: SS-022</span><span>Est: 5h</span></div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-024</span><span class="ticket-title">Access-password verifier (F5)</span><span class="badge new">v2.0</span><span class="badge">Crypto</span></div><div class="ticket-body">Client-side PBKDF2 → encrypt sentinel → upload as <code>access_verifier</code>. Recipient decrypts to verify.</div><div class="ticket-meta"><span>Depends on: SS-005, SS-006</span><span>Est: 6h</span></div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-025</span><span class="ticket-title">Link-only mode (F6)</span><span class="badge new">v2.0</span><span class="badge">Frontend</span></div><div class="ticket-body">Generate raw 256-bit key, embed in fragment; viewer reads key directly without prompt.</div><div class="ticket-meta"><span>Depends on: SS-007</span><span>Est: 3h</span></div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-026</span><span class="ticket-title">Multi-file / folder bundling (F7)</span><span class="badge new">v2.0</span><span class="badge">Frontend</span></div><div class="ticket-body">JSZip in-memory bundling; <code>webkitdirectory</code> input; preserved relative paths.</div><div class="ticket-meta"><span>Depends on: SS-012</span><span>Est: 5h</span></div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-027</span><span class="ticket-title">In-memory preview (F8)</span><span class="badge new">v2.0</span><span class="badge">Frontend</span></div><div class="ticket-body">Image via <code>createObjectURL</code>; PDF page 1 via PDF.js; no disk write.</div><div class="ticket-meta"><span>Depends on: SS-013</span><span>Est: 5h</span></div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-028</span><span class="ticket-title">QR code share (F9)</span><span class="badge new">v2.0</span><span class="badge">Frontend</span></div><div class="ticket-body">Popover next to copy button; <code>qrcode</code> npm; brand-coloured modules.</div><div class="ticket-meta"><span>Depends on: SS-012</span><span>Est: 2h</span></div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-029</span><span class="ticket-title">"How it works" modal (F11)</span><span class="badge new">v2.0</span><span class="badge">Frontend</span></div><div class="ticket-body">3-step animated modal with technical footnotes; reusable from header.</div><div class="ticket-meta"><span>Depends on: SS-011</span><span>Est: 4h</span></div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-030</span><span class="ticket-title">Theme system (F12)</span><span class="badge new">v2.0</span><span class="badge">Frontend</span></div><div class="ticket-body">data-theme attribute on html; localStorage; system fallback via media query.</div><div class="ticket-meta"><span>Depends on: SS-011</span><span>Est: 3h</span></div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-031</span><span class="ticket-title">Component library</span><span class="badge new">v2.0</span><span class="badge">Frontend</span></div><div class="ticket-body">12 base components (Button, Input, DropZone, TogglePill, Toggle, ProgressBar, ShareLink, Toast, Modal, Badge, FileTypeIcon, Spinner).</div><div class="ticket-meta"><span>Depends on: SS-011</span><span>Est: 14h</span></div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-032</span><span class="ticket-title">Redis-backed rate limiter</span><span class="badge new">v2.0</span><span class="badge">Security</span></div><div class="ticket-body">Replace in-memory counter with Redis; distributed across workers.</div><div class="ticket-meta"><span>Depends on: SS-014</span><span>Est: 3h</span></div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-033</span><span class="ticket-title">Encrypted metadata blob</span><span class="badge new">v2.0</span><span class="badge">Crypto</span></div><div class="ticket-body">Filename, MIME, size encrypted client-side and stored opaquely; replaces any plaintext filename storage.</div><div class="ticket-meta"><span>Depends on: SS-006</span><span>Est: 4h</span></div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-034</span><span class="ticket-title">Tampered-blob handling</span><span class="badge new">v2.0</span><span class="badge">Frontend</span></div><div class="ticket-body">Surface AEAD failure as a dedicated "Integrity check failed" screen — no download offered.</div><div class="ticket-meta"><span>Depends on: SS-013</span><span>Est: 2h</span></div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-035</span><span class="ticket-title">404 + Unsupported browser pages</span><span class="badge new">v2.0</span><span class="badge">Frontend</span></div><div class="ticket-body">Custom 404 with brand; unsupported-browser fallback with min-version table.</div><div class="ticket-meta"><span>Depends on: SS-011</span><span>Est: 2h</span></div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-036</span><span class="ticket-title">Accessibility pass (WCAG 2.2 AA)</span><span class="badge new">v2.0</span><span class="badge">QA</span></div><div class="ticket-body">Keyboard nav, ARIA, focus rings, screen-reader labels; Lighthouse ≥ 95.</div><div class="ticket-meta"><span>Depends on: SS-031</span><span>Est: 6h</span></div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-037</span><span class="ticket-title">Mobile breakpoints + bottom sheet</span><span class="badge new">v2.0</span><span class="badge">Frontend</span></div><div class="ticket-body">Modal-as-bottom-sheet under 640px; full-bleed card under 480px.</div><div class="ticket-meta"><span>Depends on: SS-031</span><span>Est: 4h</span></div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-038</span><span class="ticket-title">k6 load testing</span><span class="badge new">v2.0</span><span class="badge">QA</span></div><div class="ticket-body">Scripted scenario at 50 RPS sustained; p95 budget enforced in CI.</div><div class="ticket-meta"><span>Depends on: SS-021</span><span>Est: 4h</span></div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-039</span><span class="ticket-title">Sentry + structured logging</span><span class="badge new">v2.0</span><span class="badge">DevOps</span></div><div class="ticket-body">Sentry on backend + frontend; PII scrubbing for URL fragments; log redaction filter.</div><div class="ticket-meta"><span>Depends on: SS-016</span><span>Est: 3h</span></div></div>
+<div class="ticket"><div class="ticket-head"><span class="ticket-id">SS-040</span><span class="ticket-title">Documentation + landing copy</span><span class="badge new">v2.0</span><span class="badge">Docs</span></div><div class="ticket-body">README, CONTRIBUTING, SECURITY.md, in-product "How it works" copy.</div><div class="ticket-meta"><span>Depends on: SS-029</span><span>Est: 5h</span></div></div>
+
+<!-- ============================================== -->
+<h2 id="s16"><span class="num">16</span>Sprint Plan</h2>
+
+<p>Six 2-week sprints. Total estimated effort: <strong>≈ 162 hours</strong>.</p>
+
+<table>
+<thead><tr><th>Sprint</th><th>Focus</th><th>Tickets</th><th>Est. Hours</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Infrastructure & Crypto Foundations</td><td>SS-001…SS-007</td><td>27</td></tr>
+<tr><td>2</td><td>Backend API (single-shot baseline)</td><td>SS-008, SS-009, SS-010, SS-014, SS-015</td><td>20</td></tr>
+<tr><td>3</td><td>Frontend baseline & component library</td><td>SS-011, SS-012, SS-013, SS-031</td><td>30</td></tr>
+<tr><td>4</td><td>v2.0 features — sender control</td><td>SS-019, SS-020, SS-022, SS-023, SS-024, SS-025</td><td>25</td></tr>
+<tr><td>5</td><td>v2.0 features — reliability & UX</td><td>SS-021, SS-026, SS-027, SS-028, SS-029, SS-030, SS-033, SS-034, SS-035</td><td>40</td></tr>
+<tr><td>6</td><td>Hardening, CI/CD, audit, polish</td><td>SS-016, SS-017, SS-018, SS-032, SS-036…SS-040</td><td>20</td></tr>
+</tbody>
+</table>
+
+<!-- ============================================== -->
+<h2 id="s17"><span class="num">17</span>Risk Register</h2>
+
+<table>
+<thead><tr><th>Risk</th><th>Likelihood</th><th>Impact</th><th>Mitigation</th></tr></thead>
+<tbody>
+<tr><td>User loses delete link</td><td>High</td><td>Medium</td><td>Surface delete link prominently on success page; allow re-download from same browser session via in-memory state.</td></tr>
+<tr><td>User loses password</td><td>Medium</td><td>High (data unrecoverable by design)</td><td>UI copy makes this explicit upfront. Recommend strong passphrases or Link-Only mode for low-sensitivity files.</td></tr>
+<tr><td>Web Crypto unavailable on user browser</td><td>Low</td><td>High</td><td>Unsupported-browser page (SS-035) with explicit minimum versions.</td></tr>
+<tr><td>Spaces region outage</td><td>Low</td><td>High</td><td>Status page acknowledges; restore on region recovery; consider multi-region for v2.1.</td></tr>
+<tr><td>DDoS</td><td>Medium</td><td>Medium</td><td>Cloudflare in front; Nginx rate limit; Flask-Limiter on app.</td></tr>
+<tr><td>Supply-chain compromise (npm/pypi)</td><td>Low</td><td>Critical</td><td>Lockfile pinning, SRI on CDN assets (none in v2.0), pip-audit + npm audit in CI, reproducible builds.</td></tr>
+<tr><td>Reusing IV bug</td><td>Low</td><td>Critical (key compromise)</td><td>Single chokepoint API for IV generation; unit-test asserts uniqueness over 10⁶ samples.</td></tr>
+<tr><td>Fragment leak via service worker</td><td>Low</td><td>Critical</td><td>No service worker registered in v2.0; ESLint rule blocks <code>ServiceWorkerContainer</code>.</td></tr>
+<tr><td>Abuse: malware distribution</td><td>Medium</td><td>Medium-Legal</td><td>Cannot inspect content by design; reliance on takedown via reported share-link + delete-token from victim. Documented in ToS.</td></tr>
+</tbody>
+</table>
+
+<!-- ============================================== -->
+<h2 id="s18"><span class="num">18</span>Glossary</h2>
+
+<dl class="kv">
+  <dt>AEAD</dt><dd>Authenticated Encryption with Associated Data. Provides confidentiality + integrity in one primitive.</dd>
+  <dt>AES-256-GCM</dt><dd>Symmetric AEAD cipher chosen for ShadowShare's bulk encryption. NIST SP 800-38D.</dd>
+  <dt>Auth Tag</dt><dd>The 128-bit tag GCM appends; verifies that ciphertext has not been altered. Mismatch → decryption refused.</dd>
+  <dt>Blind Vault</dt><dd>A storage server engineered to be incapable of reading what it stores.</dd>
+  <dt>Blob</dt><dd>An opaque binary object. In our system, the ciphertext + IV concatenation persisted to Spaces.</dd>
+  <dt>Burn-After-Read</dt><dd>Mode in which the server destroys a blob on first successful download.</dd>
+  <dt>CSPRNG</dt><dd>Cryptographically Secure Pseudo-Random Number Generator. Provided by <code>crypto.getRandomValues</code>.</dd>
+  <dt>Delete Token</dt><dd>Random 256-bit secret returned to the sender once at upload; lets them revoke or read status.</dd>
+  <dt>IV / Nonce</dt><dd>Initialisation Vector. 96-bit value, unique per ciphertext, prevents AES-GCM key compromise on collision.</dd>
+  <dt>PBKDF2</dt><dd>Password-Based Key Derivation Function 2. Stretches a low-entropy password into a high-entropy key.</dd>
+  <dt>URL Fragment</dt><dd>The portion of a URL after <code>#</code>. Per RFC 3986 it is never sent to the server.</dd>
+  <dt>Web Crypto API</dt><dd>Native browser cryptographic interface. Used here as the sole crypto provider.</dd>
+  <dt>Zero-Knowledge</dt><dd>Property that the operator of a service cannot recover the data the service stores.</dd>
+</dl>
+
+<div class="doc-footer">
+  <span>ShadowShare v2.0 — Master Engineering Document</span>
+  <span>Confidential · Engineering · 2026</span>
+</div>
+
+</div>
+</body>
+</html>

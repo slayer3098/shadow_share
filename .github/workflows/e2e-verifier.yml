@@ -1,0 +1,45 @@
+name: E2E Verifier Test
+
+on:
+  push: {}
+  pull_request: {}
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r shadowshare-api/requirements.txt
+
+      - name: Start backend
+        run: |
+          # enable faster rate limits for CI test run
+          $env:RATE_LIMIT_TESTING = '1'
+          python shadowshare-api/run.py &
+          sleep 3
+
+      - name: Install frontend dependencies
+        run: |
+          cd "Design ShadowShare UI"
+          npm ci
+
+      - name: Run E2E tests (Vitest)
+        env:
+          API_BASE: http://127.0.0.1:8000/api
+        run: |
+          cd "Design ShadowShare UI"
+          npm test --silent
