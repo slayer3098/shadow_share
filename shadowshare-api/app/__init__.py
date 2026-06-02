@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, jsonify
 import os
 from apscheduler.schedulers.background import BackgroundScheduler
 from .config import Settings
@@ -60,6 +60,11 @@ def create_app():
         app.register_blueprint(health_bp)
         app.register_blueprint(upload_bp, url_prefix='/api')
         app.register_blueprint(file_bp, url_prefix='/api')
+
+        # Provide a root endpoint for convenience (redirects consumers to health)
+        @app.route('/')
+        def index():
+            return jsonify({"status": "ok", "version": "0.1.0"})
 
         # Create tables if missing (dev convenience)
         db.create_all()

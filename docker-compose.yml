@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: shadowshare-db
+    environment:
+      POSTGRES_USER: shadowshare
+      POSTGRES_PASSWORD: shadowshare_dev_password
+      POSTGRES_DB: shadowshare
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shadowshare"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: shadowshare-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./shadowshare-api
+      dockerfile: Dockerfile
+    container_name: shadowshare-api
+    environment:
+      FLASK_APP: run.py
+      FLASK_ENV: development
+      DATABASE_URL: postgresql://shadowshare:shadowshare_dev_password@db:5432/shadowshare
+      REDIS_URL: redis://redis:6379/0
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./shadowshare-api:/app
+    command: python run.py
+
+  # Frontend
+  frontend:
+    build:
+      context: "./Design ShadowShare UI"
+      dockerfile: Dockerfile
+    container_name: shadowshare-ui
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: http://localhost:8000
+    volumes:
+      - "./Design ShadowShare UI/src:/app/src"
+
+volumes:
+  postgres_data:
+
+networks:
+  default:
+    name: shadowshare-network
