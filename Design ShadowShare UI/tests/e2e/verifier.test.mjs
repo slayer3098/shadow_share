@@ -1,5 +1,6 @@
 import { test, expect } from 'vitest';
 import { Buffer } from 'buffer';
+import { webcrypto as crypto } from 'crypto';
 
 const apiBase = process.env.API_BASE || 'http://127.0.0.1:5000/api';
 const textEncoder = new TextEncoder();

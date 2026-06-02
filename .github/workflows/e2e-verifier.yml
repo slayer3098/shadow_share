@@ -7,6 +7,8 @@ on:
 jobs:
   e2e:
     runs-on: ubuntu-latest
+    env:
+      RATE_LIMIT_TESTING: '1'
     steps:
       - uses: actions/checkout@v4
 
@@ -27,8 +29,7 @@ jobs:
 
       - name: Start backend
         run: |
-          # enable faster rate limits for CI test run
-          $env:RATE_LIMIT_TESTING = '1'
+          # enable faster rate limits for CI test run (configured at job env)
           python shadowshare-api/run.py &
           sleep 3
 
