@@ -12,8 +12,9 @@ import {
   importRawAesKey,
   parseUtf8,
 } from '../lib/crypto';
+import { ApiError } from '../lib/api';
 
-type ViewState = 'loading' | 'password-required' | 'decrypting' | 'ready' | 'expired' | 'tampered';
+type ViewState = 'loading' | 'password-required' | 'decrypting' | 'ready' | 'expired' | 'missing' | 'tampered';
 
 export function ViewerPage({ fileId }: { fileId: string }) {
   const [state, setState] = useState<ViewState>('loading');
@@ -64,6 +65,11 @@ export function ViewerPage({ fileId }: { fileId: string }) {
         setState('tampered');
       } catch (error) {
         console.error(error);
+        if (error instanceof ApiError && (error.status === 404 || error.status === 410)) {
+          setState('missing');
+          return;
+        }
+
         setState('expired');
       }
     };
@@ -154,6 +160,11 @@ export function ViewerPage({ fileId }: { fileId: string }) {
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error(error);
+      if (error instanceof ApiError && (error.status === 404 || error.status === 410)) {
+        setState('missing');
+        return;
+      }
+
       setState('tampered');
     }
   };
@@ -430,6 +441,42 @@ export function ViewerPage({ fileId }: { fileId: string }) {
             href="/"
             className="inline-block mt-6 text-sm hover:underline"
             style={{ color: 'var(--brand-accent)', fontSize: '13px' }}
+          >
+            Return home
+          </a>
+        </div>
+      </ViewerLayout>
+    );
+  }
+
+  if (state === 'missing') {
+    return (
+      <ViewerLayout>
+        <div className="text-center">
+          <Clock size={64} style={{ color: 'var(--text-muted)' }} className="mx-auto mb-5" />
+          <h2 className="mb-3" style={{
+            fontSize: '22px',
+            fontWeight: 600,
+            color: 'var(--text-primary)'
+          }}>
+            This file no longer exists
+          </h2>
+          <p className="mb-6" style={{
+            fontSize: '14px',
+            color: 'var(--text-secondary)',
+            lineHeight: '1.5'
+          }}>
+            The sender may have enabled one-time download, the download limit was reached, or the file was removed.
+          </p>
+          <a
+            href="/"
+            className="inline-flex items-center justify-center h-11 px-6 rounded-md border transition-all"
+            style={{
+              borderColor: 'var(--brand-accent)',
+              color: 'var(--brand-accent)',
+              fontSize: '14px',
+              fontWeight: 500
+            }}
           >
             Return home
           </a>

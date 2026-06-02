@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Logo } from '../components/shadowshare/Logo';
-import { getSenderStatus, deleteFile, type SenderStatusResponse } from '../lib/api';
+import { ApiError, getSenderStatus, deleteFile, type SenderStatusResponse } from '../lib/api';
 
 export function StatusPage({ fileId }: { fileId: string }) {
   const [data, setData] = useState<SenderStatusResponse | null>(null);
@@ -23,6 +23,17 @@ export function StatusPage({ fileId }: { fileId: string }) {
       setError(null);
     } catch (err) {
       console.error(err);
+      if (err instanceof ApiError) {
+        if (err.status === 404 || err.status === 410) {
+          setError('This file no longer exists.');
+          return;
+        }
+        if (err.status === 403) {
+          setError('Invalid delete token.');
+          return;
+        }
+      }
+
       setError('Unable to load sender status.');
     } finally {
       setLoading(false);
@@ -44,6 +55,17 @@ export function StatusPage({ fileId }: { fileId: string }) {
       await load();
     } catch (err) {
       console.error(err);
+      if (err instanceof ApiError) {
+        if (err.status === 404 || err.status === 410) {
+          setError('This file no longer exists.');
+          return;
+        }
+        if (err.status === 403) {
+          setError('Invalid delete token.');
+          return;
+        }
+      }
+
       setError('Failed to delete file.');
     } finally {
       setDeleting(false);
@@ -69,7 +91,11 @@ export function StatusPage({ fileId }: { fileId: string }) {
         </h2>
 
         {loading && <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Loading status...</p>}
-        {error && <p style={{ color: 'var(--danger)', fontSize: '14px' }}>{error}</p>}
+        {error && (
+          <p style={{ color: error === 'This file no longer exists.' ? 'var(--text-muted)' : 'var(--danger)', fontSize: '14px' }}>
+            {error}
+          </p>
+        )}
 
         {!loading && !error && data && (
           <div className="space-y-3" style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>

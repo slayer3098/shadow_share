@@ -34,9 +34,9 @@ def get_file(file_id: str):
     app = current_app._get_current_object()
     file_row = File.query.get(file_id)
     if not file_row:
-        return jsonify({'title': 'File not found', 'status': 404}), 404
+        return jsonify({'title': 'File no longer exists', 'status': 404}), 404
     if _is_gone(file_row):
-        return jsonify({'title': 'File is gone', 'status': 410}), 410
+        return jsonify({'title': 'File no longer exists', 'status': 410}), 410
     def stream():
         for chunk in store.stream_blob(file_row.blob_path):
             yield chunk
@@ -74,9 +74,9 @@ def get_file(file_id: str):
 def get_file_meta(file_id: str):
     file_row = File.query.get(file_id)
     if not file_row:
-        return jsonify({'title': 'File not found', 'status': 404}), 404
+        return jsonify({'title': 'File no longer exists', 'status': 404}), 404
     if _is_gone(file_row):
-        return jsonify({'title': 'File is gone', 'status': 410}), 410
+        return jsonify({'title': 'File no longer exists', 'status': 410}), 410
 
     return jsonify({
         'fileId': file_row.file_id,
@@ -99,9 +99,9 @@ def delete_file(file_id: str):
     token = request.args.get('token', '')
     file_row = File.query.get(file_id)
     if not file_row:
-        return jsonify({'title': 'File not found', 'status': 404}), 404
+        return jsonify({'title': 'File no longer exists', 'status': 404}), 404
     if _is_gone(file_row):
-        return jsonify({'title': 'File is gone', 'status': 410}), 410
+        return jsonify({'title': 'File no longer exists', 'status': 410}), 410
 
     if not verify_delete_token(token, file_row.delete_token_hash):
         return jsonify({'title': 'Invalid delete token', 'status': 403}), 403
@@ -115,7 +115,7 @@ def sender_status(file_id: str):
     token = request.args.get('token', '')
     file_row = File.query.get(file_id)
     if not file_row:
-        return jsonify({'title': 'File not found', 'status': 404}), 404
+        return jsonify({'title': 'File no longer exists', 'status': 404}), 404
 
     if not verify_delete_token(token, file_row.delete_token_hash):
         return jsonify({'title': 'Invalid token', 'status': 403}), 403

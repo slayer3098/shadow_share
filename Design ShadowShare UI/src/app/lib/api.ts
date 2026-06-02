@@ -48,7 +48,35 @@ export type SenderStatusResponse = {
   hasAccessPassword: boolean;
 };
 
+export class ApiError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
 const apiBase = (import.meta.env.VITE_API_BASE_URL as string | undefined) || 'http://127.0.0.1:8000/api';
+
+async function readErrorMessage(res: Response, fallback: string) {
+  try {
+    const data = await res.json();
+    if (data && typeof data === 'object' && 'title' in data && typeof (data as { title?: unknown }).title === 'string') {
+      return (data as { title: string }).title;
+    }
+  } catch {
+    try {
+      const text = await res.text();
+      if (text.trim()) return text;
+    } catch {
+      // ignore and fall back below
+    }
+  }
+
+  return fallback;
+}
 
 export async function uploadInit(payload: UploadInitPayload): Promise<UploadInitResponse> {
   const res = await fetch(`${apiBase}/upload/init`, {
@@ -122,23 +150,32 @@ export async function uploadComplete(sessionId: string, payload: {
 
 export async function getFileMeta(fileId: string): Promise<FileMetaResponse> {
   const res = await fetch(`${apiBase}/file/${fileId}/meta`);
-  if (!res.ok) throw new Error(`meta fetch failed (${res.status})`);
+  if (!res.ok) {
+    throw new ApiError(await readErrorMessage(res, `meta fetch failed (${res.status})`), res.status);
+  }
   return res.json();
 }
 
 export async function downloadFileBlob(fileId: string): Promise<Blob> {
   const res = await fetch(`${apiBase}/file/${fileId}`);
-  if (!res.ok) throw new Error(`download failed (${res.status})`);
+  if (!res.ok) {
+    throw new ApiError(await readErrorMessage(res, `download failed (${res.status})`), res.status);
+  }
   return res.blob();
 }
 
 export async function getSenderStatus(fileId: string, token: string): Promise<SenderStatusResponse> {
   const res = await fetch(`${apiBase}/status/${fileId}?token=${encodeURIComponent(token)}`);
-  if (!res.ok) throw new Error(`status fetch failed (${res.status})`);
+  if (!res.ok) {
+    throw new ApiError(await readErrorMessage(res, `status fetch failed (${res.status})`), res.status);
+  }
   return res.json();
 }
 
 export async function deleteFile(fileId: string, token: string): Promise<void> {
   const res = await fetch(`${apiBase}/file/${fileId}?token=${encodeURIComponent(token)}`, { method: 'DELETE' });
-  if (!res.ok && res.status !== 410) throw new Error(`delete failed (${res.status})`);
+  if (!res.ok) {
+    // treat 410 as a valid terminal state but still communicate it to callers
+    throw new ApiError(await readErrorMessage(res, `delete failed (${res.status})`), res.status);
+  }
 }
