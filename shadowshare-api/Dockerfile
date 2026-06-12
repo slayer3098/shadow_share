@@ -19,12 +19,12 @@ COPY . .
 # Create instance directory for database
 RUN mkdir -p instance
 
-# Expose port
+# Expose the default local port. Railway injects PORT at runtime.
 EXPOSE 8000
 
 # Health check (use stdlib to avoid extra dependency)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import urllib.request,sys; r=urllib.request.urlopen('http://127.0.0.1:8000/api/health'); sys.exit(0 if r.getcode()==200 else 1)"
+    CMD python -c "import os,urllib.request,sys; port=os.getenv('PORT','8000'); r=urllib.request.urlopen(f'http://127.0.0.1:{port}/api/health'); sys.exit(0 if r.getcode()==200 else 1)"
 
-# Run the application
-CMD ["python", "run.py"]
+# Run the application with a production WSGI server.
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-8000} --workers ${WEB_CONCURRENCY:-2} --timeout ${GUNICORN_TIMEOUT:-120} run:app"]
