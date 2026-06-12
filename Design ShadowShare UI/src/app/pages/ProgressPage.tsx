@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Key, Lock, CloudUpload } from 'lucide-react';
 import { Logo } from '../components/shadowshare/Logo';
 import type { UploadData } from './UploadPage';
-import { uploadInit, uploadComplete, uploadStatus, uploadChunkWithRetry } from '../lib/api';
+import { apiBase, uploadInit, uploadComplete, uploadStatus, uploadChunkWithRetry } from '../lib/api';
 import JSZip from 'jszip';
 import {
   deriveAesKeyFromPassword,
@@ -168,7 +168,6 @@ export function ProgressPage({
       } catch (error) {
         console.error(error);
         try {
-          const apiBase = (import.meta.env.VITE_API_BASE_URL as string | undefined) || 'http://127.0.0.1:8000/api';
           alert(`Upload failed. Check local backend is running and reachable at ${apiBase}`);
         } catch (e) {
           alert('Upload failed. Check local backend is running.');

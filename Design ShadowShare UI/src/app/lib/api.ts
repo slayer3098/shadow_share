@@ -58,7 +58,25 @@ export class ApiError extends Error {
   }
 }
 
-const apiBase = (import.meta.env.VITE_API_BASE_URL as string | undefined) || 'http://127.0.0.1:8000/api';
+function normalizeApiBaseUrl(rawValue: string | undefined): string {
+  const fallback = 'http://127.0.0.1:8000/api';
+  const value = rawValue?.trim();
+
+  if (!value) return fallback;
+
+  const withProtocol = /^https?:\/\//i.test(value) ? value : `https://${value}`;
+
+  try {
+    const url = new URL(withProtocol);
+    const pathname = url.pathname.replace(/\/+$/, '');
+    url.pathname = pathname.endsWith('/api') ? pathname : `${pathname}/api`;
+    return url.toString().replace(/\/$/, '');
+  } catch {
+    return fallback;
+  }
+}
+
+export const apiBase = normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL as string | undefined);
 
 async function readErrorMessage(res: Response, fallback: string) {
   try {
